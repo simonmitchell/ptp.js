@@ -63,13 +63,14 @@ define([
                      msg);
     };
 
-    internalProto.openSocket = function () {
+    internalProto.openSocket = function (socket) {
+
         if (!this.socket.isClosed) {
             this.onSocketOpened();
             return;
         }
 
-        this.socket.open();
+        this.socket.open(socket);
     };
 
     // Works only on an open socket. Returns false iff send could not be
@@ -128,7 +129,9 @@ define([
                 writable: true
             },
             name: {value: name},
-            socket: {value: socketFactory.create()}
+            socket: {
+                value: socketFactory.create()
+            }
         });
 
         internal.prepareSocket();
@@ -140,8 +143,11 @@ define([
             };
 
         return Object.create(proto, {
-            openSocket: {value: function () {
-                return internal.openSocket();
+            socket: {set: function (x) {
+                internal.socket.socket = x;
+            }},
+            openSocket: {value: function (s) {
+                return internal.openSocket(s);
             }},
             scheduleSend: {value: function (data) {
                 return internal.scheduleSend(data);

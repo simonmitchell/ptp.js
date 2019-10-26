@@ -1,22 +1,64 @@
 {
+  "_from": "git+https://github.com/simonmitchell/ptp.js.git",
+  "_id": "ptp@2.1.1",
+  "_inBundle": false,
+  "_integrity": "",
+  "_location": "/ptp",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "git",
+    "raw": "ptp@git+https://github.com/simonmitchell/ptp.js.git",
     "name": "ptp",
-    "version": "2.1.1",
-    "author": "Developers of ptp.js",
-    "homepage": "https://github.com/feklee/ptp.js",
-    "contributors": ["Felix E. Klee <felix.klee@inka.de>"],
-    "description": "PTP/IP implementation for remote controlling cameras",
-    "main": "node_main.js",
-    "dependencies": {
-        "requirejs": ">=2",
-        "commander": "2.x",
-        "exit": "0.1.x"
-    },
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/feklee/ptp.js"
-    },
-    "license": "MIT",
-    "keywords" : ["picture", "transfer", "protocol", "photography", "camera",
-                  "video", "ptp/ip", "ip", "ptp.js"],
-    "bugs": "https://github.com/feklee/ptp.js/issues"
+    "escapedName": "ptp",
+    "rawSpec": "git+https://github.com/simonmitchell/ptp.js.git",
+    "saveSpec": "git+https://github.com/simonmitchell/ptp.js.git",
+    "fetchSpec": "https://github.com/simonmitchell/ptp.js.git",
+    "gitCommittish": null
+  },
+  "_requiredBy": [
+    "/"
+  ],
+  "_resolved": "git+https://github.com/simonmitchell/ptp.js.git#ecb942a58984e54d0b7a3c680fe0cb39c00a78af",
+  "_spec": "ptp@git+https://github.com/simonmitchell/ptp.js.git",
+  "_where": "/Users/simonmitchell/Coding/sony-camera-mocker",
+  "author": {
+    "name": "Developers of ptp.js"
+  },
+  "bugs": {
+    "url": "https://github.com/feklee/ptp.js/issues"
+  },
+  "bundleDependencies": false,
+  "contributors": [
+    {
+      "name": "Felix E. Klee",
+      "email": "felix.klee@inka.de"
+    }
+  ],
+  "dependencies": {
+    "commander": "2.x",
+    "exit": "0.1.x",
+    "requirejs": ">=2"
+  },
+  "deprecated": false,
+  "description": "PTP/IP implementation for remote controlling cameras",
+  "homepage": "https://github.com/feklee/ptp.js",
+  "keywords": [
+    "picture",
+    "transfer",
+    "protocol",
+    "photography",
+    "camera",
+    "video",
+    "ptp/ip",
+    "ip",
+    "ptp.js"
+  ],
+  "license": "MIT",
+  "main": "node_main.js",
+  "name": "ptp",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/feklee/ptp.js.git"
+  },
+  "version": "2.1.1"
 }

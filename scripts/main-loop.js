@@ -126,9 +126,13 @@ define(['./packet', './loop-factory'], function (packet, loopFactory) {
         clientName: {set: function (x) {
             clientName = x;
         }},
-        sessionId: {get: function () {
-            return sessionId;
-        }},
+        sessionId: {set: function(x) {
+                sessionId = x;
+            },
+            get: function () {
+                return sessionId;
+            }
+        },
         onSessionOpened: {set: function (x) {
             onSessionOpened = x;
         }},

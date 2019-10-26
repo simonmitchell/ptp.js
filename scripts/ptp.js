@@ -1,16 +1,16 @@
 /*jslint browser: true, maxerr: 50, maxlen: 80 */
 
-/*global define */
+/*global define */ 
 
 define([
-    './data-factory', './main-loop', './event-loop', './connection',
+    './data-factory', './server' ,'./main-loop', './event-loop', './connection',
     './set-device-property', './get-device-property',
     './capture',
     './get-object-handles', './get-object-info',
     './get-object', './delete-object',
     './logger', './util', './connection-settings',
     './device-prop-codes', './object-format-codes'
-], function (dataFactory, mainLoop, eventLoop, connection,
+], function (dataFactory, server, mainLoop, eventLoop, connection,
              setDeviceProperty, getDeviceProperty,
              capture, getObjectHandles, getObjectInfo, getObject, deleteObject,
              logger, util, connectionSettings, devicePropCodes,
@@ -32,6 +32,7 @@ define([
     });
 
     return Object.create(null, {
+        start: {value: server.start},
         connect: {value: connection.connect},
         disconnect: {value: connection.disconnect},
         capture: {value: capture},
@@ -58,6 +59,12 @@ define([
         }},
         clientName: {set: function (x) {
             mainLoop.clientName = x;
+        }},
+        serverName: {set: function(x) {
+            server.name = x;
+        }},
+        serverGuid: {set: function (x) {
+            server.guid = x;
         }},
         devicePropCodes: {get: function () {
             return devicePropCodes;

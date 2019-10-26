@@ -10,7 +10,9 @@ define(['./data-factory'], function (dataFactory) {
     'use strict';
 
     var types, headerLength = 8, transactionId = 0,
+        createInitCommandAck,
         createInitCommandRequest,
+        createInitEventAck,
         createInitEventRequest,
         createCmdRequest,
         createStartDataPacket,
@@ -40,11 +42,24 @@ define(['./data-factory'], function (dataFactory) {
 
     Object.freeze(types);
 
+    parsers[types.initCommandRequest] = function (data) {
+        return {
+            guid: data.slice(0, 16).byteArray,
+            name: data.getWstring(15)
+        }; // To be implemented
+    }
+
     parsers[types.initCommandAck] = function (data) {
         return {
             sessionId: data.getDword(0)
         };
     };
+
+    parsers[types.initEventRequest] = function (data) {
+        return {
+            sessionId: data.getDword(0)
+        };
+    }
 
     parsers[types.initEventAck] = function () {
         return {}; // no payload
@@ -115,6 +130,7 @@ define(['./data-factory'], function (dataFactory) {
 
         unparsedData = data.slice(offs + headerLength, offs + length);
         if (parser !== undefined) {
+            console.log("Unparsed data", unparsedData.byteArray);
             content = parser(unparsedData);
         } else {
             content = {
@@ -168,10 +184,40 @@ define(['./data-factory'], function (dataFactory) {
         return data;
     };
 
+    createInitCommandAck = function (sessionId, guid, name) {
+
+        var data = dataFactory.create(), i, x,
+            maxLen = 80; // arbitrary limit, possibly could be longer
+        data.setDword(headerLength, sessionId);
+        for (i = 0; i < 16; i += 1) {
+            x = (guid[i] === undefined) ? 0 : guid[i];
+            data.setByte(headerLength + i + 4, x);
+        }
+
+        // Don't include a byte defining the length of the wString
+        data.appendWstring(name.slice(0, maxLen), false);
+
+        // Mark version as 1.0
+        data.appendDword(65536);
+
+        setHeader(data, types.initCommandAck);
+
+        return data;
+    };
+
     createInitEventRequest = function (sessionId) {
         var data = dataFactory.create();
         data.setDword(headerLength, sessionId);
         setHeader(data, types.initEventRequest);
+        return data;
+    };
+
+    createInitEventAck = function (sessionId) {
+
+        var data = dataFactory.create();
+        data.setDword(headerLength, sessionId);
+        setHeader(data, types.initEventAck);
+
         return data;
     };
 
@@ -231,7 +277,9 @@ define(['./data-factory'], function (dataFactory) {
     };
 
     return Object.create(null, {
+        createInitCommandAck: {value: createInitCommandAck},
         createInitCommandRequest: {value: createInitCommandRequest},
+        createInitEventAck: {value: createInitEventAck},
         createInitEventRequest: {value: createInitEventRequest},
         createCmdRequest: {value: createCmdRequest},
         createStartDataPacket: {value: createStartDataPacket},

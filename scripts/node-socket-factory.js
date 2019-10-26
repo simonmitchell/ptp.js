@@ -11,12 +11,14 @@ define([
 
     var create, internalProto = {};
 
-    internalProto.open = function () {
+    internalProto.open = function (socket) {
         var internal = this, net = require('net');
 
         this.isConnecting = true;
 
-        this.client = net.createConnection({
+        console.log("Open", typeof socket);
+
+        this.client = socket || net.createConnection({
             port: connectionSettings.port,
             host: connectionSettings.host
         }, function () {

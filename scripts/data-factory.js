@@ -80,9 +80,11 @@ define(['./util'], function (util) {
 
     // String will be null terminated. Result is undefined if string is too
     // long to be stored in the first byte.
-    internalProto.appendWstring = function (string) {
+    internalProto.appendWstring = function (string, includingLength = true) {
         var i, lengthWithNull = string.length + 1;
-        this.appendByte(lengthWithNull);
+        if (includingLength) {
+            this.appendByte(lengthWithNull);
+        }
         for (i = 0; i < string.length; i += 1) {
             this.appendWchar(string[i]);
         }
@@ -191,8 +193,8 @@ define(['./util'], function (util) {
                 return internal.getWchar(offs);
             }},
 
-            appendWstring: {value: function (string) {
-                internal.appendWstring(string);
+            appendWstring: {value: function (string, includingLength) {
+                internal.appendWstring(string, includingLength);
             }},
 
             getWstring: {value: function (offs) {
