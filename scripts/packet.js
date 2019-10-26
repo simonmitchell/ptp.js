@@ -15,6 +15,7 @@ define(['./data-factory'], function (dataFactory) {
         createInitEventAck,
         createInitEventRequest,
         createCmdRequest,
+        createOpenSessionAck,
         createStartDataPacket,
         createDataPacket,
         createEndDataPacket,
@@ -80,6 +81,15 @@ define(['./data-factory'], function (dataFactory) {
                 data.getDword(10)
             ]
         };
+    };
+
+    parsers[types.cmdRequest] = function (data) {
+      return {
+        dataPhaseInfo: data.getDword(0),
+        opCode: data.getWord(4),
+        sessionId: data.getDword(6),
+        transactionId: data.getDword(10),
+      };
     };
 
     parsers[types.cmdResponse] = function (data) {
@@ -239,6 +249,21 @@ define(['./data-factory'], function (dataFactory) {
         return data;
     };
 
+    createOpenSessionAck = function () {
+        // TODO(gswirski): this should probably be a generic CmdResponse handler
+        //
+        // For now I hardcoded what I saw in my Wireshark session. I don't
+        // understand why the length is 14 bytes but the camera sends only 10.
+        // Might be worth experimenting with more zeros at the end, but for now,
+        // achievement unlocked. Camera sends the next command: getDeviceInfo
+        var data = dataFactory.create();
+        data.setDword(0, 14);
+        data.appendDword(7);
+        data.appendDword(8193);
+        data.appendWord(0);
+        return data;
+    };
+
     createStartDataPacket = function (size) {
         var data = dataFactory.create();
 
@@ -282,6 +307,7 @@ define(['./data-factory'], function (dataFactory) {
         createInitEventAck: {value: createInitEventAck},
         createInitEventRequest: {value: createInitEventRequest},
         createCmdRequest: {value: createCmdRequest},
+        createOpenSessionAck: {value: createOpenSessionAck},
         createStartDataPacket: {value: createStartDataPacket},
         createDataPacket: {value: createDataPacket},
         createEndDataPacket: {value: createEndDataPacket},
