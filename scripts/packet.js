@@ -9,7 +9,7 @@
 define(['./data-factory'], function (dataFactory) {
     'use strict';
 
-    var types, headerLength = 8, transactionId = 0,
+    var types, requestTypes, headerLength = 8, transactionId = 0,
         createInitCommandAck,
         createInitCommandRequest,
         createInitEventAck,
@@ -39,6 +39,12 @@ define(['./data-factory'], function (dataFactory) {
         endDataPacket: 12,
         ping: 13,
         pong: 14
+    };
+
+    requestTypes = {
+        getDeviceInfo: 0x1001,
+        openSession: 0x1002,
+        closeSession: 0x1003,
     };
 
     Object.freeze(types);
@@ -249,7 +255,7 @@ define(['./data-factory'], function (dataFactory) {
         return data;
     };
 
-    createOpenSessionAck = function () {
+    createOpenSessionAck = function (transactionId) {
         // TODO(gswirski): this should probably be a generic CmdResponse handler
         //
         // For now I hardcoded what I saw in my Wireshark session. I don't
@@ -257,31 +263,34 @@ define(['./data-factory'], function (dataFactory) {
         // Might be worth experimenting with more zeros at the end, but for now,
         // achievement unlocked. Camera sends the next command: getDeviceInfo
         var data = dataFactory.create();
-        data.setDword(0, 14);
-        data.appendDword(7);
-        data.appendDword(8193);
-        data.appendWord(0);
+        data.setDword(headerLength, 0x2001); // response status OK
+        data.appendWord(transactionId);
+
+        setHeader(data, types.cmdResponse);
+
         return data;
     };
 
-    createStartDataPacket = function (size) {
+    createStartDataPacket = function (transactionId, size) {
         var data = dataFactory.create();
 
         data.setDword(headerLength, transactionId);
-        data.appendDword(size);
+        data.appendDword(size); // TODO(gswirski): this should be a single qword
+        data.appendDword(0); // fake to simulate 16 bytes
 
         setHeader(data, types.startDataPacket);
 
         return data;
     };
 
-    createDataPacket = function (payloadData) {
+    createDataPacket = function (transactionId, payloadData, size) {
         var data = dataFactory.create();
 
         data.setDword(headerLength, transactionId);
         data.appendData(payloadData);
 
         setHeader(data, types.dataPacket);
+        data.setDword(0, size);
 
         return data;
     };
@@ -313,6 +322,7 @@ define(['./data-factory'], function (dataFactory) {
         createEndDataPacket: {value: createEndDataPacket},
         startNewTransaction: {value: startNewTransaction},
         types: {get: function () { return types; }},
+        requestTypes: {get: function () { return requestTypes; }},
         parsePackets: {value: parsePackets},
         transactionId: {get: function () { return transactionId; }}
     });

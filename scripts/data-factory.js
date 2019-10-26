@@ -10,7 +10,7 @@
 define(['./util'], function (util) {
     'use strict';
 
-    var create, createByte, createWord, createDword, createWstring,
+    var create, createByte, createWord, createDword, createQword, createWstring,
         internalProto = {};
 
     internalProto.setLittleEndian = function (offs, value, nBytes) {
@@ -30,6 +30,10 @@ define(['./util'], function (util) {
             /*jslint bitwise: false */
         }
         return value;
+    };
+
+    internalProto.appendQword = function (value) {
+        this.setLittleEndian(this.arr.length, value, 8);
     };
 
     internalProto.appendDword = function (value) {
@@ -205,6 +209,10 @@ define(['./util'], function (util) {
                 return internal.getWstringLength(offs);
             }},
 
+            appendQword: {value: function (value) {
+                internal.appendQword(value);
+            }},
+
             appendDword: {value: function (value) {
                 internal.appendDword(value);
             }},
@@ -291,6 +299,12 @@ define(['./util'], function (util) {
         return obj;
     };
 
+    createQword = function (value) {
+        var obj = create();
+        obj.appendQword(value);
+        return obj;
+    };
+
     createWstring = function (value) {
         var obj = create();
         obj.appendWstring(value);
@@ -302,6 +316,7 @@ define(['./util'], function (util) {
         createByte: {value: createByte},
         createWord: {value: createWord},
         createDword: {value: createDword},
+        createQword: {value: createQword},
         createWstring: {value: createWstring}
     });
 });
