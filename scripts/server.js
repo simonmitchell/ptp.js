@@ -16,6 +16,7 @@ define(['./packet','./connection-settings', './main-loop', './data-factory'], fu
         socket.on('data', function(data) {
 
             let packets = packet.parsePackets(dataFactory.create(data));
+            console.log("received PTP/IP packets", packets);
             if (packets.length === 1 && packets[0].type === packet.types.initCommandRequest) {
                 console.log("Received Init_Command_Request", packets[0]);
                 let sessionId = Math.floor(Math.random() * 4294967295/2);
@@ -30,6 +31,13 @@ define(['./packet','./connection-settings', './main-loop', './data-factory'], fu
                 let data = packet.createInitEventAck(sessionId);
                 socket.write(data.buffer);
                 console.log("Sending Init_Event_Ack in response", sessionId);
+            } else if (packets.length === 1 && packets[0].type === packet.types.cmdRequest) {
+                console.log("Received Open_Session", packets[0]);
+                let data = packet.createOpenSessionAck()
+                socket.write(data.buffer)
+                console.log("Sending Open_Session_Response in response");
+            } else {
+                console.log("Received unknown packets", packets);
             }
             // Write the data back to all the connected, the client will receive it as data from the server
         });
