@@ -88,12 +88,25 @@ define(['./data-factory'], function (dataFactory) {
     };
 
     parsers[types.cmdRequest] = function (data) {
+
+        var opCode = data.getWord(4)
+
         // Sometimes cmdRequest has a different length!
+        var sessionId, transactionId;
+        // OpenSession seems to indlude both sessionId and transactionId
+        if (data.length === 14 && opCode === 0x9201) {
+            sessionId = data.getDword(6);
+            transactionId = data.getDword(10);
+        } else {
+            transactionId = data.getDword(6);
+        }
+
         return {
             dataPhaseInfo: data.getDword(0),
-            opCode: data.getWord(4),
-            transactionId: data.getDword(6),
-            argsData: data.slice(10),
+            opCode: opCode,
+            sessionId: sessionId,
+            transactionId: transactionId,
+            argsData: data.slice(10)
         };
     };
 
