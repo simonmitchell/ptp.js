@@ -138,8 +138,10 @@ define(['./packet', './loop-factory', './data-factory', './device-prop-codes'], 
                 loop.scheduleSend(packet.createCmdResponse(operationCodes.okay, request.transactionId));
             break;
             case operationCodes.sdioGetExtDeviceInfo:
-
-                hexString = "2c 01 48 00 00 00 05 50 07 50 0a 50 0b 50 0c 50" +
+                // this list contains all available property codes starting with 0x5005 and
+                // ending with 0xd2dd
+                hexString = "2c 01 48 00 00 00" +
+                    "05 50 07 50 0a 50 0b 50 0c 50" +
                     "0e 50 10 50 13 50 00 d2 01 d2 03 d2 0d d2 0e d2" +
                     "0f d2 10 d2 11 d2 13 d2 14 d2 15 d2 17 d2 18 d2" +
                     "1b d2 1c d2 1d d2 1e d2 1f d2 21 d2 22 d2 23 d2" +
@@ -182,9 +184,10 @@ define(['./packet', './loop-factory', './data-factory', './device-prop-codes'], 
                     "80 22 80" +
 
                     "07 50" + // f number
-                    "04 00 01 01 ff ff" + // unknown meaning, seems like a common prefix. 04 00 is probably size of the thing
+                    "04 00" + // data type. uint16
+                    "01 01 ff ff" + // get/set (uint8), unknown (uint8), factory value (data type)
                     dataFactory.createWord(serverState.fNumber).toHex() + // current val
-                    "02" + // unknown meaning (size of val? 2 params? allowed values? available values?)
+                    "02" + // enumeration (1=range, 2=enum)
                     "13 00" + // 19 values in array
                     "18 01 40 01 5e 01 90 01 c2 01 f4 01 30 02 76 02" + // list starts with 280 (F2.8)
                     "c6 02 20 03 84 03 e8 03 4c 04 14 05 78 05 40 06" +
@@ -196,8 +199,8 @@ define(['./packet', './loop-factory', './data-factory', './device-prop-codes'], 
 
                     "0a 50" + // focus mode
                     "04 00 01 02 00 00" +
-                    "04 80" + // current value?
-                    "02" + // unknown meaning (size of val? 2 params? allowed values? available values?)
+                    "04 80" + // current value
+                    "02" + // enumeration (1=range, 2=enum)
                     "04 00" + // 4 values in array
                     "02 00 04 80 06 80 01 00" +
                     "04 00" + // 4 values in array
@@ -205,7 +208,7 @@ define(['./packet', './loop-factory', './data-factory', './device-prop-codes'], 
 
                     "0b 50" + // metering mode
                     "04 00 01 01 00 00" +
-                    "01 80" // current value?
+                    "01 80" // current value
                     "02" +
                     "06 00" + // 6 values
                     "01 80 02 80 04 80 05 80 03 80 06 80" +
