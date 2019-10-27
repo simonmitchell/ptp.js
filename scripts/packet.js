@@ -99,9 +99,9 @@ define(['./data-factory'], function (dataFactory) {
         }
 
         var params, args;
-        if (data.length > 14) {
+        if (data.length > 10) {
             args = [];
-            let paramsSlice = data.slice(14);
+            let paramsSlice = data.slice(10);
             let params = paramsSlice.length / 4;
             var i;
             for (i = 0; i < params; i++) {
