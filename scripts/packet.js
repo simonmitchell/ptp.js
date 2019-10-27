@@ -15,7 +15,7 @@ define(['./data-factory'], function (dataFactory) {
         createInitEventAck,
         createInitEventRequest,
         createCmdRequest,
-        createOpenSessionAck,
+        createCmdResponse,
         createStartDataPacket,
         createDataPacket,
         createEndDataPacket,
@@ -121,8 +121,12 @@ define(['./data-factory'], function (dataFactory) {
         };
     };
 
-    setHeader = function (data, type) {
-        data.setDword(0, data.length);
+    setHeader = function (data, type, overrideLength = null) {
+        // Make sure we send at least length of 8 as some acks don't send any data.
+        data.setDword(0, data.length === 0 ? 8 : data.length);
+        if (overrideLength !== null) {
+            data.setDword(0, overrideLength);
+        }
         data.setDword(4, type);
     };
 
@@ -140,7 +144,7 @@ define(['./data-factory'], function (dataFactory) {
 
         unparsedData = data.slice(offs + headerLength, offs + length);
         if (parser !== undefined) {
-            console.log("Unparsed data", unparsedData.byteArray);
+            // console.log("Unparsed data", unparsedData.byteArray);
             content = parser(unparsedData);
         } else {
             content = {
@@ -222,10 +226,9 @@ define(['./data-factory'], function (dataFactory) {
         return data;
     };
 
-    createInitEventAck = function (sessionId) {
+    createInitEventAck = function () {
 
         var data = dataFactory.create();
-        data.setDword(headerLength, sessionId);
         setHeader(data, types.initEventAck);
 
         return data;
@@ -249,18 +252,16 @@ define(['./data-factory'], function (dataFactory) {
         return data;
     };
 
-    createOpenSessionAck = function () {
-        // TODO(gswirski): this should probably be a generic CmdResponse handler
-        //
-        // For now I hardcoded what I saw in my Wireshark session. I don't
-        // understand why the length is 14 bytes but the camera sends only 10.
-        // Might be worth experimenting with more zeros at the end, but for now,
-        // achievement unlocked. Camera sends the next command: getDeviceInfo
+    createCmdResponse = function (code, transactionId, responseData) {
+
         var data = dataFactory.create();
-        data.setDword(0, 14);
-        data.appendDword(7);
-        data.appendDword(8193);
-        data.appendWord(0);
+        data.setWord(headerLength, code);
+        data.setDword(headerLength + 2, transactionId);
+        if (!!responseData) {
+            data.appendData(responseData);
+        }
+        setHeader(data, types.cmdResponse);
+
         return data;
     };
 
@@ -307,7 +308,7 @@ define(['./data-factory'], function (dataFactory) {
         createInitEventAck: {value: createInitEventAck},
         createInitEventRequest: {value: createInitEventRequest},
         createCmdRequest: {value: createCmdRequest},
-        createOpenSessionAck: {value: createOpenSessionAck},
+        createCmdResponse: {value: createCmdResponse},
         createStartDataPacket: {value: createStartDataPacket},
         createDataPacket: {value: createDataPacket},
         createEndDataPacket: {value: createEndDataPacket},

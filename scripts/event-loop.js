@@ -71,9 +71,14 @@ define([
             loop.onError = x;
         }},
         scheduleSend: {value: loop.scheduleSend},
-        sessionId: {set: function (x) {
-            sessionId = x;
-        }},
+        sessionId: {
+            set: function(x) {
+                sessionId = x;
+            },
+            get: function () {
+                return sessionId;
+            }
+        },
         eventCodes: {get: function () {
             return eventCodes;
         }},

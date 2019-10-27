@@ -65,6 +65,7 @@ define([
 
     internalProto.openSocket = function (socket) {
 
+        console.log("Socket closed?", this.socket.isClosed);
         if (!this.socket.isClosed) {
             this.onSocketOpened();
             return;
@@ -76,6 +77,9 @@ define([
     // Works only on an open socket. Returns false iff send could not be
     // scheduled.
     internalProto.scheduleSend = function (data) {
+
+        console.log("Schedule send", data, this.socket.isClosed, this.sendIsSafe);
+
         if (this.socket.isClosed) {
             return false;
         }

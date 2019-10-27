@@ -114,6 +114,10 @@ define(['./util'], function (util) {
         this.setLittleEndian(offs, value, 4);
     };
 
+    internalProto.setWord = function (offs, value) {
+        this.setLittleEndian(offs, value, 2);
+    }
+
     internalProto.appendArray = function (arrToAppend) {
         var i;
         for (i = 0; i < arrToAppend.length; i += 1) {
@@ -215,6 +219,10 @@ define(['./util'], function (util) {
 
             getByte: {value: function (offs) {
                 return internal.getByte(offs);
+            }},
+
+            setWord: {value: function (offs, value) {
+                return internal.setWord(offs, value);
             }},
 
             getWord: {value: function (offs) {

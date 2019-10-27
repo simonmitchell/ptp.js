@@ -2,7 +2,7 @@
 
 /*global define, Uint8Array */
 
-define(['./packet', './loop-factory'], function (packet, loopFactory) {
+define(['./packet', './loop-factory', './data-factory'], function (packet, loopFactory, dataFactory) {
     'use strict';
 
     var onInitialized,
@@ -15,6 +15,7 @@ define(['./packet', './loop-factory'], function (packet, loopFactory) {
         endDataPacketCallbacks = {}, // by transaction ID
         loop = loopFactory.create('main'),
         sessionId,
+        openSessionId,
         openSession,
         onSessionOpened;
 
@@ -47,7 +48,8 @@ define(['./packet', './loop-factory'], function (packet, loopFactory) {
         moveObject: 0x1019,
         copyObject: 0x101a,
         getPartialObject: 0x101b,
-        initiateOpenCapture: 0x101c
+        initiateOpenCapture: 0x101c,
+        okay: 0x2001
     };
 
     Object.freeze(operationCodes);
@@ -70,6 +72,18 @@ define(['./packet', './loop-factory'], function (packet, loopFactory) {
     loop.onSocketOpened = function () {
         loop.scheduleSend(packet.createInitCommandRequest(clientGuid,
                                                           clientName));
+    };
+
+    loop.onDataCallbacks[packet.types.cmdRequest] = function (content) {
+        switch (content.opCode) {
+            case operationCodes.openSession: 
+                openSessionId = content.sessionId;
+                loop.scheduleSend(packet.createCmdResponse(operationCodes.okay, content.transactionId));
+            break;
+                console.log("Got unknown opcode request", content.opCode);
+            default:
+
+        }
     };
 
     loop.onDataCallbacks[packet.types.cmdResponse] = function (content) {
@@ -126,7 +140,8 @@ define(['./packet', './loop-factory'], function (packet, loopFactory) {
         clientName: {set: function (x) {
             clientName = x;
         }},
-        sessionId: {set: function(x) {
+        sessionId: {
+            set: function(x) {
                 sessionId = x;
             },
             get: function () {
