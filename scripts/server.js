@@ -7,8 +7,7 @@ define(['./packet','./connection-settings', './main-loop', './event-loop', './da
         name = '',
         start,
         sessionId,
-        sockets = [],
-        namedSockets = {};
+        sockets = [];
 
     onConnection = function (socket) {
 
