@@ -85,12 +85,36 @@ define(['./data-factory'], function (dataFactory) {
     };
 
     parsers[types.cmdRequest] = function (data) {
+
+        var opCode = data.getWord(4)
+
         // Sometimes cmdRequest has a different length!
+        var sessionId, transactionId;
+        // OpenSession seems to indlude both sessionId and transactionId
+        if (data.length === 14 && opCode === 0x9201) {
+            sessionId = data.getDword(6);
+            transactionId = data.getDword(10);
+        } else {
+            transactionId = data.getDword(6);
+        }
+
+        var params, args;
+        if (data.length > 14) {
+            args = [];
+            let paramsSlice = data.slice(14);
+            let params = paramsSlice.length / 4;
+            var i;
+            for (i = 0; i < params; i++) {
+                args.push(paramsSlice.getDword(i*4));
+            }
+        }
+
         return {
             dataPhaseInfo: data.getDword(0),
-            opCode: data.getWord(4),
-            sessionId: data.length === 22 ? data.getDword(6) : undefined,
-            transactionId: data.length === 22 ? data.getDword(10) : data.getDword(6),
+            opCode: opCode,
+            sessionId: sessionId,
+            transactionId: transactionId,
+            args: args
         };
     };
 
