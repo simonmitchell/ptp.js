@@ -15,10 +15,11 @@ define(['./data-factory'], function (dataFactory) {
         createInitEventAck,
         createInitEventRequest,
         createCmdRequest,
-        createOpenSessionAck,
+        createResponseOk,
         createStartDataPacket,
         createDataPacket,
         createEndDataPacket,
+        createEventPacket,
         startNewTransaction,
         parsePacket, parsePackets,
         setHeader,
@@ -263,7 +264,7 @@ define(['./data-factory'], function (dataFactory) {
         return data;
     };
 
-    createOpenSessionAck = function (transactionId) {
+    createResponseOk = function (transactionId) {
         // TODO(gswirski): this should probably be a generic CmdResponse handler
         //
         // For now I hardcoded what I saw in my Wireshark session. I don't
@@ -314,6 +315,17 @@ define(['./data-factory'], function (dataFactory) {
         return data;
     };
 
+    createEventPacket = function () {
+        var data = dataFactory.create();
+
+        data.setWord(headerLength, 0xC203); // event code
+        data.appendDword(0xFFFFFFFF); // transaction id == -1
+        data.appendDword(0);
+
+        setHeader(data, types.event);
+        return data;
+    };
+
     startNewTransaction = function () {
         transactionId += 1;
     };
@@ -324,10 +336,11 @@ define(['./data-factory'], function (dataFactory) {
         createInitEventAck: {value: createInitEventAck},
         createInitEventRequest: {value: createInitEventRequest},
         createCmdRequest: {value: createCmdRequest},
-        createOpenSessionAck: {value: createOpenSessionAck},
+        createResponseOk: {value: createResponseOk},
         createStartDataPacket: {value: createStartDataPacket},
         createDataPacket: {value: createDataPacket},
         createEndDataPacket: {value: createEndDataPacket},
+        createEventPacket: {value: createEventPacket},
         startNewTransaction: {value: startNewTransaction},
         types: {get: function () { return types; }},
         requestTypes: {get: function () { return requestTypes; }},

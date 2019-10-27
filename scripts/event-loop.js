@@ -11,11 +11,37 @@ define([
         loop = loopFactory.create('event'),
         captureCompleteCallbacks = {}, // by transaction ID
         objectAddedCallbacks = [],
-        eventHandlers = {}; // by event code
+        eventHandlers = {}, // by event code
+        allowedEventProperties;
 
     eventCodes = {
         objectAdded: 0x4002,
-        captureComplete: 0x400D
+        captureComplete: 0x400D,
+
+        // Sony specific events
+        sonyObjectAdded: 0xC201,
+        sonyObjectRemoved: 0xC202,
+        sonyPropertyChanged: 0xC203,
+    };
+
+    allowedEventProperties = {
+        DPCCompensation: 0xD200,
+        DRangeOptimize: 0xD201,
+        ImageSize: 0xD203,
+        ShutterSpeed: 0xD20D,
+        ColorTemp: 0xD20F,
+        CCFilter: 0xD210,
+        AspectRatio: 0xD211,
+        FocusFound: 0xD213,
+        ObjectInMemory: 0xD215,
+        ExposeIndex: 0xD216,
+        BatteryLevel: 0xD218,
+        PictureEffect: 0xD21B,
+        ABFilter: 0xD21C,
+        ISO: 0xD21E,
+        Movie: 0xD2C8,
+        StillImage: 0xD2C7,
+        WhiteBalance: 0x5005,
     };
 
     eventHandlers[eventCodes.captureComplete] = function (content) {
