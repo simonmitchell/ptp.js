@@ -19,6 +19,7 @@ define(['./data-factory'], function (dataFactory) {
         createStartDataPacket,
         createDataPacket,
         createEndDataPacket,
+        createDataContainer,
         createEventPacket,
         startNewTransaction,
         parsePacket, parsePackets,
@@ -50,10 +51,12 @@ define(['./data-factory'], function (dataFactory) {
         sdioGetExtDeviceInfo: 0x9202,
         sonyGetDevicePropDesc: 0x9203,
         sonyGetDevicePropValue: 0x9204,
-        setControlDeviceA: 0x9205,
+        setControlDeviceA: 0x9205, // used to set properties from the app
         getControlDeviceDesc: 0x9206,
         setControlDeviceB: 0x9207,
         getAllDevicePropData: 0x9209,
+
+        unknownHandshakeRequest: 0x920D,
     };
 
     Object.freeze(types);
@@ -292,27 +295,35 @@ define(['./data-factory'], function (dataFactory) {
         return data;
     };
 
-    createDataPacket = function (transactionId, payloadData, size) {
+    createDataPacket = function (transactionId, payloadData) {
         var data = dataFactory.create();
 
         data.setDword(headerLength, transactionId);
         data.appendData(payloadData);
 
         setHeader(data, types.dataPacket);
-        data.setDword(0, size);
 
         return data;
     };
 
-    createEndDataPacket = function (payloadData) {
+    createEndDataPacket = function (transactionId) {
         var data = dataFactory.create();
 
         data.setDword(headerLength, transactionId);
-        data.appendData(payloadData);
 
         setHeader(data, types.endDataPacket);
 
         return data;
+    };
+
+    createDataContainer = function (transactionId, payload) {
+      var size = payload.length;
+
+      var startDataPacket = createStartDataPacket(transactionId, size);
+      var dataPacket = createDataPacket(transactionId, payload);
+      var endDataPacket = createEndDataPacket(transactionId);
+
+      return [startDataPacket, dataPacket, endDataPacket];
     };
 
     createEventPacket = function () {
@@ -340,6 +351,7 @@ define(['./data-factory'], function (dataFactory) {
         createStartDataPacket: {value: createStartDataPacket},
         createDataPacket: {value: createDataPacket},
         createEndDataPacket: {value: createEndDataPacket},
+        createDataContainer: { value: createDataContainer},
         createEventPacket: {value: createEventPacket},
         startNewTransaction: {value: startNewTransaction},
         types: {get: function () { return types; }},

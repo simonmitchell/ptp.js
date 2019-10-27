@@ -78,14 +78,10 @@ define(['./packet','./connection-settings', './main-loop', './data-factory'], fu
                 "00 30 00 30 00 30 00 30 00 30 00 30 00 30 00 30" +
                 "00 30 00 30 00 30 00 30 00 33 00 32 00 38 00 32" +
                 "00 38 00 39 00 33 00 30 00 30 00 33 00 37 00 37" +
-                "00 37 00 39 00 38 00 32 00 00 00 0c 00 00 00 0c" +
-                "00 00 00 01 00 00 00 0e 00 00 00 07 00 00 00 01" +
-                "20 01 00 00 00"));
+                "00 37 00 39 00 38 00 32 00 00 00"));
 
             let sdioConnectPayload = dataFactory.create(toBytes(
-                "00 00 00 00 00 00 00 00 0c 00 00 00 0c 00 00 00" +
-                "02 00 00 00 0e 00 00 00 07 00 00 00 01 20 02 00" +
-                "00 00"));
+                "00 00 00 00 00 00 00 00"));
 
             let sdioGetExtDeviceInfoPayload = dataFactory.create(toBytes(
                 "2c 01 48 00 00 00 05 50 07 50 0a 50 0b 50 0c 50" +
@@ -100,8 +96,7 @@ define(['./packet','./connection-settings', './main-loop', './data-factory'], fu
                 "64 d2 67 d2 78 d2 16 00 00 00 c1 d2 c2 d2 c3 d2" +
                 "c7 d2 c8 d2 c9 d2 ca d2 cd d2 ce d2 cf d2 d0 d2" +
                 "d1 d2 d2 d2 d5 d2 d6 d2 d7 d2 d8 d2 d9 d2 da d2" +
-                "db d2 dc d2 dd d2 0c 00 00 00 0c 00 00 00 04 00" +
-                "00 00"));
+                "db d2 dc d2 dd d2"));
 
             // TODO(gswirski): this should be relatively easy to break
             // down once we know how to handle single properties
@@ -308,8 +303,10 @@ define(['./packet','./connection-settings', './main-loop', './data-factory'], fu
                 "65 00 25 00 32 00 66 00 6a 00 70 00 65 00 67 00" +
                 "25 00 33 00 61 00 25 00 32 00 61 00 25 00 32 00" +
                 "31 00 25 00 32 00 31 00 25 00 32 00 31 00 25 00" +
-                "32 00 31 00 25 00 32 00 31 00 00 00 00 0c 00 00" +
-                "00 0c 00 00 00 03 00 00 00"));
+                "32 00 31 00 25 00 32 00 31 00 00 00 00"));
+
+            let unknownHandshakePayload = dataFactory.create(toBytes(
+                "81 00 00 00 00"));
 
             let handleCmdRequest = function (request) {
                 var data;
@@ -326,58 +323,59 @@ define(['./packet','./connection-settings', './main-loop', './data-factory'], fu
                         break;
                     case packet.requestTypes.getDeviceInfo:
                         console.log("Received Get_Device_Info", request);
-                        data = packet.createStartDataPacket(request.sessionId, 267);
+                        dataContainer = packet.createDataContainer(request.sessionId, a9DeviceInfoPayload);
+                        for (var data of dataContainer) {
+                          socket.write(data.buffer);
+                        }
+                        data = packet.createResponseOk(request.transactionId)
                         socket.write(data.buffer);
-                        console.log("Sending Start_Data_Packet in response");
-                        data = packet.createDataPacket(request.sessionId, a9DeviceInfoPayload, 279);
-                        socket.write(data.buffer);
-                        console.log("Sending Data_Packet in response");
                         break;
                     case packet.requestTypes.sdioConnect:
                         console.log("Received SDIO_Connect request", request);
-                        data = packet.createStartDataPacket(request.sessionId, 8);
+                        dataContainer = packet.createDataContainer(request.sessionId, sdioConnectPayload);
+                        for (var data of dataContainer) {
+                          socket.write(data.buffer);
+                        }
+                        data = packet.createResponseOk(request.transactionId)
                         socket.write(data.buffer);
-                        console.log("Sending Start_Data_Packet in response");
-                        data = packet.createDataPacket(request.sessionId, sdioConnectPayload, 20);
-                        socket.write(data.buffer);
-                        console.log("Sending Data_Packet in response");
                         break;
                     case packet.requestTypes.sdioGetExtDeviceInfo:
                         console.log("Received SDIO_Get_Ext_Device_Info request", request);
 
-                        data = packet.createStartDataPacket(request.sessionId, 198);
-                        socket.write(data.buffer);
-                        console.log("Sending Start_Data_Packet in response");
-
-                        data = packet.createDataPacket(request.sessionId, sdioGetExtDeviceInfoPayload, 210);
-                        socket.write(data.buffer);
-                        console.log("Sending Data_Packet in response");
+                        dataContainer = packet.createDataContainer(request.sessionId, sdioGetExtDeviceInfoPayload);
+                        for (var data of dataContainer) {
+                          socket.write(data.buffer);
+                        }
 
                         // TODO(gswirski): this is not needed to establish connection
                         // but brings Wireshark sessions in-line with what I saw on a9
                         data = packet.createEventPacket();
                         namedSockets['event'].write(data.buffer);
-                        console.log("Sending Event_Packet in response");
 
                         data = packet.createResponseOk(request.transactionId)
                         socket.write(data.buffer);
-                        console.log("Sending OK in response");
                         break;
                     case packet.requestTypes.getAllDevicePropData:
                         console.log("Received Get_All_Device_Prop_Data request", request);
 
-                        data = packet.createStartDataPacket(request.sessionId, 3229);
-                        socket.write(data.buffer);
-                        console.log("Sending Start_Data_Packet in response");
-
-                        data = packet.createDataPacket(request.sessionId, allDevicePropDataPayload, 3241);
-                        socket.write(data.buffer);
-                        console.log("Sending Data_Packet in response");
+                        dataContainer = packet.createDataContainer(request.sessionId, allDevicePropDataPayload);
+                        for (var data of dataContainer) {
+                          socket.write(data.buffer);
+                        }
 
                         data = packet.createResponseOk(request.transactionId)
                         socket.write(data.buffer);
-                        console.log("Sending OK in response");
                         break;
+                    case packet.requestTypes.unknownHandshakeRequest:
+                        console.log("Received 0x920D request", request);
+
+                        dataContainer = packet.createDataContainer(request.sessionId, unknownHandshakePayload);
+                        for (var data of dataContainer) {
+                          socket.write(data.buffer);
+                        }
+
+                        data = packet.createResponseOk(request.transactionId)
+                        socket.write(data.buffer);
                     default:
                         console.log("Unknown Command Request packet", request);
                 }
@@ -393,6 +391,9 @@ define(['./packet','./connection-settings', './main-loop', './data-factory'], fu
                         break;
                     case packet.types.cmdRequest:
                         handleCmdRequest(request);
+                        break;
+                    case packet.types.ping:
+                        console.log("Received Ping request - don't know what to do!", request);
                         break;
                     default:
                         console.log("Unknown packet type", request);
