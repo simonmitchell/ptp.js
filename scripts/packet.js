@@ -20,6 +20,7 @@ define(['./data-factory'], function (dataFactory) {
         createDataPacket,
         createEndDataPacket,
         startNewTransaction,
+        hexToBytes,
         parsePacket, parsePackets,
         setHeader,
         parsers = {}; // by packet type
@@ -84,12 +85,13 @@ define(['./data-factory'], function (dataFactory) {
     };
 
     parsers[types.cmdRequest] = function (data) {
-      return {
-        dataPhaseInfo: data.getDword(0),
-        opCode: data.getWord(4),
-        sessionId: data.getDword(6),
-        transactionId: data.getDword(10),
-      };
+        // Sometimes cmdRequest has a different length!
+        return {
+            dataPhaseInfo: data.getDword(0),
+            opCode: data.getWord(4),
+            sessionId: data.length === 22 ? data.getDword(6) : undefined,
+            transactionId: data.length === 22 ? data.getDword(10) : data.getDword(6),
+        };
     };
 
     parsers[types.cmdResponse] = function (data) {
@@ -265,24 +267,26 @@ define(['./data-factory'], function (dataFactory) {
         return data;
     };
 
-    createStartDataPacket = function (size) {
+    createStartDataPacket = function (transactionId, size) {
         var data = dataFactory.create();
 
         data.setDword(headerLength, transactionId);
-        data.appendDword(size);
+        data.appendDword(size); // TODO(gswirski): this should be a single qword
+        data.appendDword(0); // fake to simulate 16 bytes
 
         setHeader(data, types.startDataPacket);
 
         return data;
     };
 
-    createDataPacket = function (payloadData) {
+    createDataPacket = function (transactionId, payloadData, size) {
         var data = dataFactory.create();
 
         data.setDword(headerLength, transactionId);
         data.appendData(payloadData);
 
         setHeader(data, types.dataPacket);
+        data.setDword(0, size);
 
         return data;
     };
