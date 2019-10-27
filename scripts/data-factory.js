@@ -120,7 +120,7 @@ define(['./util'], function (util) {
 
     internalProto.setWord = function (offs, value) {
         this.setLittleEndian(offs, value, 2);
-    }
+    };
 
     internalProto.appendArray = function (arrToAppend) {
         var i;
@@ -231,7 +231,7 @@ define(['./util'], function (util) {
             }},
 
             setWord: {value: function (offs, value) {
-                return internal.setWord(offs, value);
+                internal.setWord(offs, value);
             }},
 
             getWord: {value: function (offs) {

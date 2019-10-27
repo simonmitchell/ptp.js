@@ -15,7 +15,12 @@ define([
 
     eventCodes = {
         objectAdded: 0x4002,
-        captureComplete: 0x400D
+        captureComplete: 0x400D,
+
+        // Sony specific events
+        sonyObjectAdded: 0xC201,
+        sonyObjectRemoved: 0xC202,
+        sonyPropertyChanged: 0xC203,
     };
 
     eventHandlers[eventCodes.captureComplete] = function (content) {
@@ -51,6 +56,11 @@ define([
         if (handler !== undefined) {
             handler(content);
         }
+    };
+
+    loop.onDataCallbacks[packet.types.ping] = function (content) {
+      console.log("Received Ping");
+      loop.scheduleSend(packet.createPong());
     };
 
     loop.onSocketOpened = function () {

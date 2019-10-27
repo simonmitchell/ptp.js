@@ -19,6 +19,9 @@ define(['./data-factory'], function (dataFactory) {
         createStartDataPacket,
         createDataPacket,
         createEndDataPacket,
+        createDataContainer,
+        createEventPacket,
+        createPong,
         startNewTransaction,
         hexToBytes,
         parsePacket, parsePackets,
@@ -98,23 +101,12 @@ define(['./data-factory'], function (dataFactory) {
             transactionId = data.getDword(6);
         }
 
-        var params, args;
-        if (data.length > 10) {
-            args = [];
-            let paramsSlice = data.slice(10);
-            let params = paramsSlice.length / 4;
-            var i;
-            for (i = 0; i < params; i++) {
-                args.push(paramsSlice.getDword(i*4));
-            }
-        }
-
         return {
             dataPhaseInfo: data.getDword(0),
             opCode: opCode,
             sessionId: sessionId,
             transactionId: transactionId,
-            args: args
+            argsData: data.slice(10)
         };
     };
 
@@ -279,7 +271,6 @@ define(['./data-factory'], function (dataFactory) {
     };
 
     createCmdResponse = function (code, transactionId, responseData) {
-
         var data = dataFactory.create();
         data.setWord(headerLength, code);
         data.setDword(headerLength + 2, transactionId);
@@ -303,26 +294,51 @@ define(['./data-factory'], function (dataFactory) {
         return data;
     };
 
-    createDataPacket = function (transactionId, payloadData, size) {
+    createDataPacket = function (transactionId, payloadData) {
         var data = dataFactory.create();
 
         data.setDword(headerLength, transactionId);
         data.appendData(payloadData);
 
         setHeader(data, types.dataPacket);
-        data.setDword(0, size);
 
         return data;
     };
 
-    createEndDataPacket = function (payloadData) {
+    createEndDataPacket = function (transactionId) {
         var data = dataFactory.create();
 
         data.setDword(headerLength, transactionId);
-        data.appendData(payloadData);
 
         setHeader(data, types.endDataPacket);
 
+        return data;
+    };
+
+    createDataContainer = function (transactionId, payload) {
+      var size = payload.length;
+
+      var startDataPacket = createStartDataPacket(transactionId, size);
+      var dataPacket = createDataPacket(transactionId, payload);
+      var endDataPacket = createEndDataPacket(transactionId);
+
+      return [startDataPacket, dataPacket, endDataPacket];
+    };
+
+    createEventPacket = function () {
+        var data = dataFactory.create();
+
+        data.setWord(headerLength, 0xC203); // event code
+        data.appendDword(0xFFFFFFFF); // transaction id == -1
+        data.appendDword(0);
+
+        setHeader(data, types.event);
+        return data;
+    };
+
+    createPong = function () {
+        var data = dataFactory.create();
+        setHeader(data, types.pong);
         return data;
     };
 
@@ -340,6 +356,9 @@ define(['./data-factory'], function (dataFactory) {
         createStartDataPacket: {value: createStartDataPacket},
         createDataPacket: {value: createDataPacket},
         createEndDataPacket: {value: createEndDataPacket},
+        createDataContainer: { value: createDataContainer},
+        createEventPacket: {value: createEventPacket},
+        createPong: {value: createPong},
         startNewTransaction: {value: startNewTransaction},
         types: {get: function () { return types; }},
         parsePackets: {value: parsePackets},
