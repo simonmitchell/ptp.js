@@ -268,6 +268,15 @@ define(['./util'], function (util) {
                 return internal.toString();
             }},
 
+            toHex: {value: function () {
+                var mapping = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e'];
+                var result = "";
+                for (var c of internal.arr) {
+                  result = result + mapping[(c >>> 4)] + mapping[c % 16]
+                }
+                return result;
+            }},
+
             array: {get: function () {
                 return internal.arr;
             }},
@@ -342,7 +351,7 @@ define(['./util'], function (util) {
     createFromHexString = function (value) {
         var obj = create(hexToBytes(value));
         return obj;
-    }
+    };
 
     return Object.create(null, {
         create: {value: create},

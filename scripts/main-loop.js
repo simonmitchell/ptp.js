@@ -17,7 +17,12 @@ define(['./packet', './loop-factory', './data-factory', './device-prop-codes'], 
         sessionId,
         openSessionId,
         openSession,
-        onSessionOpened;
+        onSessionOpened,
+        serverState = {};
+
+    serverState = {
+      fNumber: 280
+    };
 
     operationCodes = {
         'undefined': 0x1000,
@@ -166,17 +171,30 @@ define(['./packet', './loop-factory', './data-factory', './device-prop-codes'], 
 
                 // TODO(gswirski): this should be relatively easy to break
                 // down once we know how to handle single properties
-                hexString = "48 00 00 00 00 00 00 00 05 50 04 00 01 01 00 00" +
+                hexString = "48 00 00 00 00 00 00 00" + // 72 distinct properties seems too high?
+
+                    "05 50" + // white balance
+                    "04 00 01 01 00 00" +
                     "02 00 02 0f 00 02 00 04 00 11 80 10 80 06 00 01" +
                     "80 02 80 03 80 04 80 07 00 30 80 12 80 20 80 21" +
                     "80 22 80 0f 00 02 00 04 00 11 80 10 80 06 00 01" +
                     "80 02 80 03 80 04 80 07 00 30 80 12 80 20 80 21" +
-                    "80 22 80 07 50 04 00 01 01 ff ff 18 01 02 13 00" +
-                    "18 01 40 01 5e 01 90 01 c2 01 f4 01 30 02 76 02" +
+                    "80 22 80" +
+
+                    "07 50" + // f number
+                    "04 00 01 01 ff ff" + // unknown meaning, seems like a common prefix. 04 00 is probably size of the thing
+                    dataFactory.createWord(serverState.fNumber).toHex() + // current val
+                    "02" + // unknown meaning (2 params? allowed values? available values?)
+                    "13 00" + // 19 values in array
+                    "18 01 40 01 5e 01 90 01 c2 01 f4 01 30 02 76 02" + // list starts with 280 (F2.8)
                     "c6 02 20 03 84 03 e8 03 4c 04 14 05 78 05 40 06" +
-                    "08 07 d0 07 98 08 13 00 18 01 40 01 5e 01 90 01" +
-                    "c2 01 f4 01 30 02 76 02 c6 02 20 03 84 03 e8 03" +
-                    "4c 04 14 05 78 05 40 06 08 07 d0 07 98 08 0a 50" +
+                    "08 07 d0 07 98 08" +                               // list ends with 2200 (F22)
+                    "13 00" + // 19 values in array
+                    "18 01 40 01 5e 01 90 01 c2 01 f4 01 30 02 76 02" + // list starts with 280 (F2.8)
+                    "c6 02 20 03 84 03 e8 03 4c 04 14 05 78 05 40 06" +
+                    "08 07 d0 07 98 08" +                               // list ends with 2200 (F22)
+
+                    "0a 50" + // focus mode
                     "04 00 01 02 00 00 04 80 02 04 00 02 00 04 80 06" +
                     "80 01 00 04 00 02 00 04 80 06 80 01 00 0b 50 04" +
                     "00 01 01 00 00 01 80 02 06 00 01 80 02 80 04 80" +
@@ -405,6 +423,7 @@ define(['./packet', './loop-factory', './data-factory', './device-prop-codes'], 
                     dataPacketCallbacks[request.transactionId] = function (content) {
                         var value = content.payloadData.getWord(0);
                         console.log("setting", value);
+                        serverState.fNumber = value;
                     };
                     endDataPacketCallbacks[request.transactionId] = function (content) {
                         // do nothing
