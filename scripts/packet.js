@@ -92,8 +92,8 @@ define(['./data-factory'], function (dataFactory) {
         return {
             dataPhaseInfo: data.getDword(0),
             opCode: data.getWord(4),
-            sessionId: data.length === 22 ? data.getDword(6) : undefined,
-            transactionId: data.length === 22 ? data.getDword(10) : data.getDword(6),
+            transactionId: data.getDword(6),
+            argsData: data.slice(10),
         };
     };
 

@@ -2,7 +2,7 @@
 
 /*global define, Uint8Array */
 
-define(['./packet', './loop-factory', './data-factory'], function (packet, loopFactory, dataFactory) {
+define(['./packet', './loop-factory', './data-factory', './device-prop-codes'], function (packet, loopFactory, dataFactory, deviceProps) {
     'use strict';
 
     var onInitialized,
@@ -393,16 +393,24 @@ define(['./packet', './loop-factory', './data-factory'], function (packet, loopF
                 loop.scheduleSend(packet.createCmdResponse(operationCodes.okay, request.transactionId));
             break;
             case operationCodes.setControlDeviceA:
-                console.log("Received setControlDeviceA request");
-                startDataPacketCallbacks[request.transactionId] = function (content) {
-                  console.log("start", content);
-                };
-                dataPacketCallbacks[request.transactionId] = function (content) {
-                  console.log("mid", content.payloadData.toString(), content.payloadData.array);
-                };
-                endDataPacketCallbacks[request.transactionId] = function (content) {
-                  console.log("end", content.payloadData.toString(), content.payloadData.array);
-                };
+                console.log("Received setControlDeviceA", request);
+
+                var propertyCode = request.argsData.getWord(0);
+                if (propertyCode == deviceProps.fNumber) {
+                    console.log("Trying to set FNumber");
+
+                    startDataPacketCallbacks[request.transactionId] = function (content) {
+                        // do nothing
+                    };
+                    dataPacketCallbacks[request.transactionId] = function (content) {
+                        var value = content.payloadData.getWord(0);
+                        console.log("setting", value);
+                    };
+                    endDataPacketCallbacks[request.transactionId] = function (content) {
+                        // do nothing
+                    };
+                }
+
                 loop.scheduleSend(packet.createCmdResponse(operationCodes.okay, request.transactionId));
             break;
             default:
