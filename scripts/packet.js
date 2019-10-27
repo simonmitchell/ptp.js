@@ -21,6 +21,7 @@ define(['./data-factory'], function (dataFactory) {
         createEndDataPacket,
         createDataContainer,
         createEventPacket,
+        createPong,
         startNewTransaction,
         hexToBytes,
         parsePacket, parsePackets,
@@ -322,6 +323,12 @@ define(['./data-factory'], function (dataFactory) {
         return data;
     };
 
+    createPong = function () {
+        var data = dataFactory.create();
+        setHeader(data, types.pong);
+        return data;
+    };
+
     startNewTransaction = function () {
         transactionId += 1;
     };
@@ -338,6 +345,7 @@ define(['./data-factory'], function (dataFactory) {
         createEndDataPacket: {value: createEndDataPacket},
         createDataContainer: { value: createDataContainer},
         createEventPacket: {value: createEventPacket},
+        createPong: {value: createPong},
         startNewTransaction: {value: startNewTransaction},
         types: {get: function () { return types; }},
         parsePackets: {value: parsePackets},

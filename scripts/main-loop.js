@@ -392,6 +392,19 @@ define(['./packet', './loop-factory', './data-factory'], function (packet, loopF
 
                 loop.scheduleSend(packet.createCmdResponse(operationCodes.okay, request.transactionId));
             break;
+            case operationCodes.setControlDeviceA:
+                console.log("Received setControlDeviceA request");
+                startDataPacketCallbacks[request.transactionId] = function (content) {
+                  console.log("start", content);
+                };
+                dataPacketCallbacks[request.transactionId] = function (content) {
+                  console.log("mid", content.payloadData.toString(), content.payloadData.array);
+                };
+                endDataPacketCallbacks[request.transactionId] = function (content) {
+                  console.log("end", content.payloadData.toString(), content.payloadData.array);
+                };
+                loop.scheduleSend(packet.createCmdResponse(operationCodes.okay, request.transactionId));
+            break;
             default:
                 console.log("Got unknown opcode request", request.opCode);
 

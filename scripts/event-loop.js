@@ -112,6 +112,11 @@ define([
         }
     };
 
+    loop.onDataCallbacks[packet.types.ping] = function (content) {
+      console.log("Received Ping");
+      loop.scheduleSend(packet.createPong());
+    };
+
     loop.onSocketOpened = function () {
         if (sessionId !== undefined) {
             loop.scheduleSend(packet.createInitEventRequest(sessionId));
