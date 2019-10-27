@@ -45,6 +45,14 @@ define(['./data-factory'], function (dataFactory) {
         getDeviceInfo: 0x1001,
         openSession: 0x1002,
         closeSession: 0x1003,
+        sdioConnect: 0x9201,
+        sdioGetExtDeviceInfo: 0x9202,
+        sonyGetDevicePropDesc: 0x9203,
+        sonyGetDevicePropValue: 0x9204,
+        setControlDeviceA: 0x9205,
+        getControlDeviceDesc: 0x9206,
+        setControlDeviceB: 0x9207,
+        getAllDevicePropData: 0x9209,
     };
 
     Object.freeze(types);
