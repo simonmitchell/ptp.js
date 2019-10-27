@@ -15,8 +15,11 @@ define([
         var internal = this, net = require('net');
 
         this.isConnecting = true;
-
-        console.log("Open", typeof socket);
+        if (!!socket) {
+            this.isConnecting = false;
+            this.isClosed = false;
+            this.onOpen();
+        }
 
         this.client = socket || net.createConnection({
             port: connectionSettings.port,

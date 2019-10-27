@@ -10,7 +10,7 @@
 define(['./util'], function (util) {
     'use strict';
 
-    var create, createByte, createWord, createDword, createQword, createWstring,
+    var create, createByte, createWord, createDword, createQword, createWstring, hexToBytes, createFromHexString,
         internalProto = {};
 
     internalProto.setLittleEndian = function (offs, value, nBytes) {
@@ -118,6 +118,10 @@ define(['./util'], function (util) {
         this.setLittleEndian(offs, value, 4);
     };
 
+    internalProto.setWord = function (offs, value) {
+        this.setLittleEndian(offs, value, 2);
+    }
+
     internalProto.appendArray = function (arrToAppend) {
         var i;
         for (i = 0; i < arrToAppend.length; i += 1) {
@@ -181,6 +185,7 @@ define(['./util'], function (util) {
         }
 
         return Object.create(null, {
+
             setByte: {value: function (offs, value) {
                 internal.setByte(offs, value);
             }},
@@ -223,6 +228,10 @@ define(['./util'], function (util) {
 
             getByte: {value: function (offs) {
                 return internal.getByte(offs);
+            }},
+
+            setWord: {value: function (offs, value) {
+                return internal.setWord(offs, value);
             }},
 
             getWord: {value: function (offs) {
@@ -311,12 +320,37 @@ define(['./util'], function (util) {
         return obj;
     };
 
+    hexToBytes = function (hexString) {
+        var c, cnt = 0, result = [], mapping = {
+            '0': 0, '1': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, 'a': 10, 'b': 11, 'c': 12, 'd': 13, 'e': 14, 'f': 15
+        };
+        for (var i = 0; i < hexString.length; i++) {
+            c = hexString[i];
+            if (c == ' ') {
+                continue;
+            }
+            if (cnt % 2 == 0) {
+                result.push(mapping[c]);
+            } else {
+                result[result.length-1] = result[result.length-1] * 16 + mapping[c]
+            }
+            cnt += 1;
+        }
+        return result;
+    };
+
+    createFromHexString = function (value) {
+        var obj = create(hexToBytes(value));
+        return obj;
+    }
+
     return Object.create(null, {
         create: {value: create},
         createByte: {value: createByte},
         createWord: {value: createWord},
         createDword: {value: createDword},
         createQword: {value: createQword},
-        createWstring: {value: createWstring}
+        createWstring: {value: createWstring},
+        createFromHexString: {value: createFromHexString}
     });
 });
