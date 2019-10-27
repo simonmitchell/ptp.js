@@ -76,6 +76,7 @@ define([
     // Works only on an open socket. Returns false iff send could not be
     // scheduled.
     internalProto.scheduleSend = function (data) {
+
         if (this.socket.isClosed) {
             return false;
         }

@@ -9,19 +9,20 @@
 define(['./data-factory'], function (dataFactory) {
     'use strict';
 
-    var types, requestTypes, headerLength = 8, transactionId = 0,
+    var types, headerLength = 8, transactionId = 0,
         createInitCommandAck,
         createInitCommandRequest,
         createInitEventAck,
         createInitEventRequest,
         createCmdRequest,
-        createResponseOk,
+        createCmdResponse,
         createStartDataPacket,
         createDataPacket,
         createEndDataPacket,
         createDataContainer,
         createEventPacket,
         startNewTransaction,
+        hexToBytes,
         parsePacket, parsePackets,
         setHeader,
         parsers = {}; // by packet type
@@ -41,22 +42,6 @@ define(['./data-factory'], function (dataFactory) {
         endDataPacket: 12,
         ping: 13,
         pong: 14
-    };
-
-    requestTypes = {
-        getDeviceInfo: 0x1001,
-        openSession: 0x1002,
-        closeSession: 0x1003,
-        sdioConnect: 0x9201,
-        sdioGetExtDeviceInfo: 0x9202,
-        sonyGetDevicePropDesc: 0x9203,
-        sonyGetDevicePropValue: 0x9204,
-        setControlDeviceA: 0x9205, // used to set properties from the app
-        getControlDeviceDesc: 0x9206,
-        setControlDeviceB: 0x9207,
-        getAllDevicePropData: 0x9209,
-
-        unknownHandshakeRequest: 0x920D,
     };
 
     Object.freeze(types);
@@ -102,12 +87,13 @@ define(['./data-factory'], function (dataFactory) {
     };
 
     parsers[types.cmdRequest] = function (data) {
-      return {
-        dataPhaseInfo: data.getDword(0),
-        opCode: data.getWord(4),
-        sessionId: data.getDword(6),
-        transactionId: data.getDword(10),
-      };
+        // Sometimes cmdRequest has a different length!
+        return {
+            dataPhaseInfo: data.getDword(0),
+            opCode: data.getWord(4),
+            sessionId: data.length === 22 ? data.getDword(6) : undefined,
+            transactionId: data.length === 22 ? data.getDword(10) : data.getDword(6),
+        };
     };
 
     parsers[types.cmdResponse] = function (data) {
@@ -139,8 +125,12 @@ define(['./data-factory'], function (dataFactory) {
         };
     };
 
-    setHeader = function (data, type) {
-        data.setDword(0, data.length);
+    setHeader = function (data, type, overrideLength = null) {
+        // Make sure we send at least length of 8 as some acks don't send any data.
+        data.setDword(0, data.length === 0 ? 8 : data.length);
+        if (overrideLength !== null) {
+            data.setDword(0, overrideLength);
+        }
         data.setDword(4, type);
     };
 
@@ -158,7 +148,7 @@ define(['./data-factory'], function (dataFactory) {
 
         unparsedData = data.slice(offs + headerLength, offs + length);
         if (parser !== undefined) {
-            console.log("Unparsed data", unparsedData.byteArray);
+            // console.log("Unparsed data", unparsedData.byteArray);
             content = parser(unparsedData);
         } else {
             content = {
@@ -240,10 +230,9 @@ define(['./data-factory'], function (dataFactory) {
         return data;
     };
 
-    createInitEventAck = function (sessionId) {
+    createInitEventAck = function () {
 
         var data = dataFactory.create();
-        data.setDword(headerLength, sessionId);
         setHeader(data, types.initEventAck);
 
         return data;
@@ -267,17 +256,13 @@ define(['./data-factory'], function (dataFactory) {
         return data;
     };
 
-    createResponseOk = function (transactionId) {
-        // TODO(gswirski): this should probably be a generic CmdResponse handler
-        //
-        // For now I hardcoded what I saw in my Wireshark session. I don't
-        // understand why the length is 14 bytes but the camera sends only 10.
-        // Might be worth experimenting with more zeros at the end, but for now,
-        // achievement unlocked. Camera sends the next command: getDeviceInfo
+    createCmdResponse = function (code, transactionId, responseData) {
         var data = dataFactory.create();
-        data.setDword(headerLength, 0x2001); // response status OK
-        data.appendWord(transactionId);
-
+        data.setWord(headerLength, code);
+        data.setDword(headerLength + 2, transactionId);
+        if (!!responseData) {
+            data.appendData(responseData);
+        }
         setHeader(data, types.cmdResponse);
 
         return data;
@@ -347,7 +332,7 @@ define(['./data-factory'], function (dataFactory) {
         createInitEventAck: {value: createInitEventAck},
         createInitEventRequest: {value: createInitEventRequest},
         createCmdRequest: {value: createCmdRequest},
-        createResponseOk: {value: createResponseOk},
+        createCmdResponse: {value: createCmdResponse},
         createStartDataPacket: {value: createStartDataPacket},
         createDataPacket: {value: createDataPacket},
         createEndDataPacket: {value: createEndDataPacket},
@@ -355,7 +340,6 @@ define(['./data-factory'], function (dataFactory) {
         createEventPacket: {value: createEventPacket},
         startNewTransaction: {value: startNewTransaction},
         types: {get: function () { return types; }},
-        requestTypes: {get: function () { return requestTypes; }},
         parsePackets: {value: parsePackets},
         transactionId: {get: function () { return transactionId; }}
     });
