@@ -188,7 +188,7 @@ define(['./packet', './loop-factory', './data-factory', './device-prop-codes'], 
                     "01 01 ff ff" + // get/set (uint8), unknown (uint8), factory value (data type)
                     dataFactory.createWord(serverState.fNumber).toHex() + // current val
                     "02" + // enumeration (1=range, 2=enum)
-                    "13 00" + // 19 values in array
+                    "13 00" + // 19 values in array @simon: 1 array will be "available" and one will be "supported".
                     "18 01 40 01 5e 01 90 01 c2 01 f4 01 30 02 76 02" + // list starts with 280 (F2.8)
                     "c6 02 20 03 84 03 e8 03 4c 04 14 05 78 05 40 06" +
                     "08 07 d0 07 98 08" +                               // list ends with 2200 (F22)
@@ -199,28 +199,32 @@ define(['./packet', './loop-factory', './data-factory', './device-prop-codes'], 
 
                     "0a 50" + // focus mode
                     "04 00 01 02 00 00" +
-                    "04 80" + // current value
+                    "01 00" + // current value (AF-C)
                     "02" + // enumeration (1=range, 2=enum)
                     "04 00" + // 4 values in array
+                    // (AF-S = 0x0002, AF-C = x8004, DMF = x8060, MF = x0001)
                     "02 00 04 80 06 80 01 00" +
                     "04 00" + // 4 values in array
                     "02 00 04 80 06 80 01 00" +
 
                     "0b 50" + // metering mode
                     "04 00 01 01 00 00" +
-                    "01 80" // current value
+                    "01 80" + // current value
                     "02" +
                     "06 00" + // 6 values
                     "01 80 02 80 04 80 05 80 03 80 06 80" +
                     "06 00" +
                     "01 80 02 80 04 80 05 80 03 80 06 80" +
 
-                    "0c 50" // flash mode
-                    "04 00 01 01 00 00"
-                    "03 00" // current value
-                    "02"
+                    "0c 50" + // flash mode
+                    "04 00 01 01 00 00" +
+                    "03 00" + // current value
+                    "02" +
                     "03 00 03 00 01 80 03 80 05 00 02 00 01 00 03 00 01" +
-                    "80 03 80 0e 50 06 00 01 02 00 00 00 00 03 00 02" +
+                    "80 03 80" +
+
+                    "0e 50" + // Exposure programme mode
+                    "06 00 01 02 00 00 00 00 03 00 02" +
                     "00 02 0d 00 02 00 01 00 03 00 02 00 04 00 03 00" +
                     "01 00 00 00 50 80 07 00 51 80 07 00 52 80 07 00" +
                     "53 80 07 00 59 80 09 00 5a 80 09 00 5b 80 09 00" +
