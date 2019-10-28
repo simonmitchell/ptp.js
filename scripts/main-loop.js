@@ -176,20 +176,27 @@ define(['./packet', './loop-factory', './data-factory', './device-prop-codes'], 
                 hexString = "48 00 00 00 00 00 00 00" + // 72 distinct properties seems too high?
 
                     "05 50" + // white balance
-                    "04 00 01 01 00 00" +
-                    "02 00 02 0f 00 02 00 04 00 11 80 10 80 06 00 01" +
-                    "80 02 80 03 80 04 80 07 00 30 80 12 80 20 80 21" +
-                    "80 22 80 0f 00 02 00 04 00 11 80 10 80 06 00 01" +
-                    "80 02 80 03 80 04 80 07 00 30 80 12 80 20 80 21" +
-                    "80 22 80" +
+                    "04 00" + // data type. uint16 (4 bytes)
+                    "01 01 00 00" + // get and set both available
+                    "02 00" + // current val
+                    "02" + // enumeration
+                    "0f 00" + // 15 values in array
+                    "02 00 04 00 11 80 10 80 06 00 01 80 02 80" +
+                    "03 80 04 80 07 00 30 80 12 80 20 80 21 80" +
+                    "22 80"
+                    "0f 00" + // 15 values in array
+                    "02 00 04 00 11 80 10 80 06 00 01 80 02 80" +
+                    "03 80 04 80 07 00 30 80 12 80 20 80 21 80" +
+                    "22 80" +
 
                     "07 50" + // f number
                     "04 00" + // data type. uint16
-                    "01 01 ff ff" + // get/set (uint8), unknown (uint8), factory value (data type)
+                    // get (01 = available, 02 = unavailable), set (01 = available, 02 = unavailable)
+                    "01 01 ff ff" + // unknown (uint8), factory value (data type)
                     dataFactory.createWord(serverState.fNumber).toHex() + // current val
                     "02" + // enumeration (1=range, 2=enum)
-                    "13 00" + // 19 values in array @simon: 1 array will be "available" and one will be "supported".
-                    "18 01 40 01 5e 01 90 01 c2 01 f4 01 30 02 76 02" + // list starts with 280 (F2.8)
+                    "13 00" + // 19 values in array @simon: 1 array will be "available" and one will be "supported" not able to confirm this.
+                    "18 01 40 01 5e 01 90 01 c2 01 f4 01 30 02 76 02" + // list starts with 280 (F2.8) (280, 320, 350, )
                     "c6 02 20 03 84 03 e8 03 4c 04 14 05 78 05 40 06" +
                     "08 07 d0 07 98 08" +                               // list ends with 2200 (F22)
                     "13 00" + // 19 values in array
@@ -198,22 +205,25 @@ define(['./packet', './loop-factory', './data-factory', './device-prop-codes'], 
                     "08 07 d0 07 98 08" +                               // list ends with 2200 (F22)
 
                     "0a 50" + // focus mode
-                    "04 00 01 02 00 00" +
-                    "01 00" + // current value (AF-C)
+                    "04 00" + // data type. uint16
+                    "01 02 00 00" + // get (available), set (unavailable), unknown (uint8), factory value (data type)?
+                    "04 80" + // current value (AF-C)
                     "02" + // enumeration (1=range, 2=enum)
                     "04 00" + // 4 values in array
-                    // (AF-S = 0x0002, AF-C = x8004, DMF = x8060, MF = x0001)
+                    // (AF-S = 0x0002, AF-C = 0x8004, DMF = 0x8060, MF = 0x0001)
                     "02 00 04 80 06 80 01 00" +
                     "04 00" + // 4 values in array
                     "02 00 04 80 06 80 01 00" +
 
                     "0b 50" + // metering mode
                     "04 00 01 01 00 00" +
-                    "01 80" + // current value
+                    "04 80" + // current value (Smart)
                     "02" +
                     "06 00" + // 6 values
+                    // (Smart/Multi = 0x8001, Center Weighted = 0x8002, Whole Screen AVG = 0x8003
+                    //  , Spot (Standard) = 0x8004, Spot (Large) = 0x8005, Highlight = 0x8006)
                     "01 80 02 80 04 80 05 80 03 80 06 80" +
-                    "06 00" +
+                    "06 00" + // 6 values
                     "01 80 02 80 04 80 05 80 03 80 06 80" +
 
                     "0c 50" + // flash mode
