@@ -269,7 +269,7 @@ define(['./util'], function (util) {
             }},
 
             toHex: {value: function () {
-                var mapping = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e'];
+                var mapping = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'];
                 var result = "";
                 for (var c of internal.arr) {
                   result = result + mapping[(c >>> 4)] + mapping[c % 16]
