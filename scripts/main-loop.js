@@ -2,7 +2,7 @@
 
 /*global define, Uint8Array */
 
-define(['./packet', './loop-factory', './data-factory', './device-prop-codes'], function (packet, loopFactory, dataFactory, deviceProps) {
+define(['./packet', './event-loop', './loop-factory', './data-factory', './device-prop-codes'], function (packet, eventLoop, loopFactory, dataFactory, deviceProps) {
     'use strict';
 
     var onInitialized,
@@ -170,7 +170,6 @@ define(['./packet', './loop-factory', './data-factory', './device-prop-codes'], 
                 loop.scheduleSend(packet.createCmdResponse(operationCodes.okay, request.transactionId));
             break;
             case operationCodes.getAllDevicePropData:
-
                 // TODO(gswirski): this should be relatively easy to break
                 // down once we know how to handle single properties
                 hexString = "48 00 00 00 00 00 00 00" + // 72 distinct properties seems too high?
@@ -449,7 +448,7 @@ define(['./packet', './loop-factory', './data-factory', './device-prop-codes'], 
                         serverState.fNumber = value;
                     };
                     endDataPacketCallbacks[request.transactionId] = function (content) {
-                        // do nothing
+                        eventLoop.scheduleSend(packet.createEventPacket());
                     };
                 }
 
