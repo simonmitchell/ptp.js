@@ -177,12 +177,16 @@ define(['./packet', './event-loop', './loop-factory', './data-factory', './devic
                     "05 50" + // white balance
                     "04 00" + // data type. uint16 (4 bytes)
                     "01 01 00 00" + // get and set both available
-                    "02 00" + // current val
+                    "12 80" + // current val (AWB)
                     "02" + // enumeration
                     "0f 00" + // 15 values in array
+                    // (AWB = 0x0002, Daylight = 0x0004, Shade = 0x0811, Cloudy = 0x0810, Incandescent = 0x0006,
+                    //  Fluor (Warm White) = 0x8001, Fluor (Cool White) = 0x8002, Fluor (Day White) = 0x8003,
+                    //  Fluor (Daylight) = 0x8004, Flash = 0x0007, Underwater Auto = 0x8030, Color Temp = 0x8012,
+                    //  Custom 1 = 0x8020, Custom 2 = 0x8021, Custom 3 = 0x8022)
                     "02 00 04 00 11 80 10 80 06 00 01 80 02 80" +
                     "03 80 04 80 07 00 30 80 12 80 20 80 21 80" +
-                    "22 80"
+                    "22 80" +
                     "0f 00" + // 15 values in array
                     "02 00 04 00 11 80 10 80 06 00 01 80 02 80" +
                     "03 80 04 80 07 00 30 80 12 80 20 80 21 80" +
@@ -215,9 +219,10 @@ define(['./packet', './event-loop', './loop-factory', './data-factory', './devic
                     "02 00 04 80 06 80 01 00" +
 
                     "0b 50" + // metering mode
-                    "04 00 01 01 00 00" +
+                    "04 00" + // uint16.
+                    "01 01 00 00" + // Set and Get available
                     "04 80" + // current value (Smart)
-                    "02" +
+                    "02" + // enum
                     "06 00" + // 6 values
                     // (Smart/Multi = 0x8001, Center Weighted = 0x8002, Whole Screen AVG = 0x8003
                     //  , Spot (Standard) = 0x8004, Spot (Large) = 0x8005, Highlight = 0x8006)
@@ -226,11 +231,16 @@ define(['./packet', './event-loop', './loop-factory', './data-factory', './devic
                     "01 80 02 80 04 80 05 80 03 80 06 80" +
 
                     "0c 50" + // flash mode
-                    "04 00 01 01 00 00" +
+                    "04 00" + // uint16
+                    "01 01 00 00" + // Set and Get available
                     "03 00" + // current value
-                    "02" +
-                    "03 00 03 00 01 80 03 80 05 00 02 00 01 00 03 00 01" +
-                    "80 03 80" +
+                    "02" + // enum
+                    "03 00" + // 3 values
+                    // (Fill-flash = 0x0003, Slow Synchro = 0x8001, Rear Sync. = 0x8003)
+                    "03 00 01 80 03 80" +
+                    "05 00" + // 5 values (could get interesting!)
+                    // (Fill-flash = 0x0003, Slow Synchro = 0x8001, Rear Sync. = 0x8003, Auto = 0x0001, Off = 0x0002)
+                    "02 00 01 00 03 00 01 80 03 80" +
 
                     "0e 50" + // Exposure programme mode
                     "06 00 01 02 00 00 00 00 03 00 02" +
