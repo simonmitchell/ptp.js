@@ -1,7 +1,8 @@
 define(['./device-prop-codes', './device-prop-types', './device-prop', 'props/white-balance', 
-        'props/focus-mode', 'props/metering-mode', 'props/flash-mode'], 
+        'props/focus-mode', 'props/metering-mode', 'props/flash-mode', 'props/exposure-programme-mode',
+        'props/still-capture-mode'], 
         function (devicePropTypes, devicePropDataTypes, deviceProp, whiteBalance, focusMode, 
-                    meteringMode, flashMode) {
+                    meteringMode, flashMode, exposureProgramMode, stillCaptureMode) {
 
     var propTypes;
 
@@ -50,6 +51,33 @@ define(['./device-prop-codes', './device-prop-types', './device-prop', 'props/wh
             flashMode.auto, flashMode.auto,
             true,
             Object.values(flashMode), Object.values(flashMode)
+        ),
+        [devicePropTypes.exposureProgramMode]: deviceProp.create(
+            devicePropTypes.exposureProgramMode,
+            devicePropDataTypes.uint32,
+            true, true,
+            exposureProgramMode.manual, exposureProgramMode.manual,
+            true,
+            Object.values(exposureProgramMode), Object.values(exposureProgramMode)
+        ),
+        [devicePropTypes.exposureBiasCompensation]: deviceProp.create(
+            devicePropTypes.exposureBiasCompensation,
+            devicePropDataTypes.int16,
+            true, true,
+            0x0000, 0x0000,
+            true,
+            [5000, 4700, 4300, 4000, 3700, 3300, 3000, 2700, 2300, 2000, 1700, 1300, 1000, 700, 300, 0, 
+            -300, -700, -1000, -1300, -1700, -2000, -2300, -2700, -3000, -3300, -3700, -4000, -4300, -4700, -5000],
+            [5000, 4700, 4300, 4000, 3700, 3300, 3000, 2700, 2300, 2000, 1700, 1300, 1000, 700, 300, 0, 
+            -300, -700, -1000, -1300, -1700, -2000, -2300, -2700, -3000, -3300, -3700, -4000, -4300, -4700, -5000]
+        ),
+        [devicePropTypes.stillCaptureMode]: deviceProp.create(
+            devicePropTypes.stillCaptureMode,
+            devicePropDataTypes.uint32,
+            true, true,
+            stillCaptureMode.single, stillCaptureMode.single,
+            true,
+            Object.values(stillCaptureMode), Object.values(stillCaptureMode)
         )
     };
     
