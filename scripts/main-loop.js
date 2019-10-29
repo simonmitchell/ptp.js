@@ -21,7 +21,8 @@ define(['./packet', './event-loop', './loop-factory', './data-factory', './devic
         serverState = {};
 
     serverState = {
-      fNumber: 280
+      fNumber: 280,
+      driveMode: 0x00000001
     };
 
     operationCodes = {
@@ -288,7 +289,7 @@ define(['./packet', './event-loop', './loop-factory', './data-factory', './devic
                     "06 00" + // uint32
                     "01 01" + // Get but no Set
                     "00 00 00 00" + // Factory value
-                    "05 80 03 00" + // Current value
+                    dataFactory.createDword(serverState.driveMode).toHex() + // Current value
                     "02" + // enum
                     "31 00" + // 49 values!? Yep... 49 values!
                     // (Single Shot = 0x00000001, Continous (Hi+ Speed) = 0x00018010, 
@@ -296,11 +297,25 @@ define(['./packet', './event-loop', './loop-factory', './data-factory', './devic
                     // Continuous (S?) = 0x00018014, Continuous (Hi speed) = 0x00018015),
                     // 10 second timer = 0x00010002, 10 second timer = 0x00038004 <--- Interesting, seems to be two of these
                     // 5 second timer = 0x00038003, 2 second timer = 0x00038005, 
+                    // 10 second 3x = 0x00088008, 10 second 5x = 0x00088009, 5 second 3x = 0x0008800c,
+                    // 5 second 5x = 0x0008800d, 2 second 3x = 0x0008800e, 2 second 5x = 0x0008800f,
+                    // BRK C 0.3ev3 = 0x00048337, BRK C 0.3ev5 = 0x00048537, BRK C 0.3ev9 = 0x00048937,
+                    // BRK C 0.5ev3 = 0x00048357, BRK C 0.5ev5 = 0x00048557, BRK C 0.5ev9 = 0x00048957,
+                    // BRK C 0.7ev3 = 0x00048377, BRK C 0.7ev5 = 0x00048577, BRK C 0.7ev9 = 0x00048977,
+                    // BRK C 1.0ev3 = 0x00048311, BRK C 1.0ev5 = 0x00048511, BRK C 1.0ev9 = 0x00048911,
+                    // BRK C 2.0ev3 = 0x00048321, BRK C 2.0ev5 = 0x00048521, BRK C 3.0ev3 = 0x00048331,
+                    // BRK C 3.0ev5 = 0x00048531, BRK S 0.3ev3 = 0x00058336, BRK S 0.3ev5 = 0x00058536,
+                    // BRK S 0.3ev9 = 0x00058936, BRK S 0.5ev3 = 0x00058356, BRK S 0.5ev5 = 0x00058556,
+                    // BRK S 0.5ev9 = 0x00058956, BRK S 0.7ev3 = 0x00058376, BRK S 0.7ev5 = 0x00058576,
+                    // BRK S 0.7ev9 = 0x00058976, BRK S 1.0ev3 = 0x00058310, BRK S 1.0ev5 = 0x00058510,
+                    // BRK S 1.0ev9 = 0x00058910, BRK S 2.0ev3 = 0x00058320, BRK S 2.0ev5 = 0x00058520,
+                    // BRK S 3.0ev3 = 0x00058330, BRK S 3.0ev5 = 0x00058530, BRK WB Hi = 0x00068028,
+                    // BRK WB LO = 0x00068018, BRK DRO HI = 0x00078029, BRK DRO LO = 0x00078019
                     "01 00 00 00 12 80 01 00" +
-                    "15 80 01 00 02 00 01 00 04 80 03 00 03 80 03 00" + // Up to end of this line!
+                    "15 80 01 00 02 00 01 00 04 80 03 00 03 80 03 00" +
                     "05 80 03 00 08 80 08 00 09 80 08 00 0c 80 08 00" +
                     "0d 80 08 00 0e 80 08 00 0f 80 08 00 37 83 04 00" +
-                    "37 85 04 00 37 89 04 00 57 83 04 00 57 85 04 00" +
+                    "37 85 04 00 37 89 04 00 57 83 04 00 57 85 04 00" + // Up to end of this line!
                     "57 89 04 00 77 83 04 00 77 85 04 00 77 89 04 00" +
                     "11 83 04 00 11 85 04 00 11 89 04 00 21 83 04 00" +
                     "21 85 04 00 31 83 04 00 31 85 04 00 36 83 05 00" +
@@ -502,11 +517,26 @@ define(['./packet', './event-loop', './loop-factory', './data-factory', './devic
                     };
                     dataPacketCallbacks[request.transactionId] = function (content) {
                         var value = content.payloadData.getWord(0);
-                        console.log("setting", value);
+                        let paramData = content.payloadData.slice(0,2);
+                        console.log("setting", value, paramData.toHex(), paramData.toBigEndianHex());
                         serverState.fNumber = value;
                     };
                     endDataPacketCallbacks[request.transactionId] = function (content) {
-                        eventLoop.scheduleSend(packet.createEventPacket());
+                        eventLoop.scheduleSend(packet.createEventPacket(content.transactionId));
+                    };
+                } else if (propertyCode == deviceProps.stillCaptureMode) {
+                    console.log("Trying to set still capture mode");
+                    startDataPacketCallbacks[request.transactionId] = function (content) {
+                        // do nothing
+                    };
+                    dataPacketCallbacks[request.transactionId] = function (content) {
+                        var value = content.payloadData.getDword(0);
+                        let paramData = content.payloadData.slice(0,4);
+                        console.log("setting", value, paramData.toHex(), paramData.toBigEndianHex());
+                        serverState.driveMode = value;
+                    };
+                    endDataPacketCallbacks[request.transactionId] = function (content) {
+                        eventLoop.scheduleSend(packet.createEventPacket(content.transactionId));
                     };
                 }
 
