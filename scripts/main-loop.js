@@ -2,7 +2,7 @@
 
 /*global define, Uint8Array */
 
-define(['./packet', './event-loop', './loop-factory', './data-factory', './device-prop-codes'], function (packet, eventLoop, loopFactory, dataFactory, deviceProps) {
+define(['./packet', './event-loop', './loop-factory', './data-factory', './device-prop-codes', './device-prop-types', './camera'], function (packet, eventLoop, loopFactory, dataFactory, deviceProps, devicePropTypes, device) {
     'use strict';
 
     var onInitialized,
@@ -171,77 +171,16 @@ define(['./packet', './event-loop', './loop-factory', './data-factory', './devic
                 loop.scheduleSend(packet.createCmdResponse(operationCodes.okay, request.transactionId));
             break;
             case operationCodes.getAllDevicePropData:
+
                 // TODO(gswirski): this should be relatively easy to break
                 // down once we know how to handle single properties
                 hexString = "48 00 00 00 00 00 00 00" + // 72 distinct properties seems too high?
 
-                    "05 50" + // white balance
-                    "04 00" + // data type. uint16 (4 bytes)
-                    "01 01 00 00" + // get and set both available
-                    "12 80" + // current val (AWB)
-                    "02" + // enumeration
-                    "0f 00" + // 15 values in array
-                    // (AWB = 0x0002, Daylight = 0x0004, Shade = 0x0811, Cloudy = 0x0810, Incandescent = 0x0006,
-                    //  Fluor (Warm White) = 0x8001, Fluor (Cool White) = 0x8002, Fluor (Day White) = 0x8003,
-                    //  Fluor (Daylight) = 0x8004, Flash = 0x0007, Underwater Auto = 0x8030, Color Temp = 0x8012,
-                    //  Custom 1 = 0x8020, Custom 2 = 0x8021, Custom 3 = 0x8022)
-                    "02 00 04 00 11 80 10 80 06 00 01 80 02 80" +
-                    "03 80 04 80 07 00 30 80 12 80 20 80 21 80" +
-                    "22 80" +
-                    "0f 00" + // 15 values in array
-                    "02 00 04 00 11 80 10 80 06 00 01 80 02 80" +
-                    "03 80 04 80 07 00 30 80 12 80 20 80 21 80" +
-                    "22 80" +
-
-                    "07 50" + // f number
-                    "04 00" + // data type. uint16
-                    // get (01 = available, 02 = unavailable), set (01 = available, 02 = unavailable)
-                    "01 01 ff ff" + // unknown (uint8), factory value (data type)
-                    dataFactory.createWord(serverState.fNumber).toHex() + // current val
-                    "02" + // enumeration (1=range, 2=enum)
-                    "13 00" + // 19 values in array @simon: 1 array will be "available" and one will be "supported" not able to confirm this.
-                    "18 01 40 01 5e 01 90 01 c2 01 f4 01 30 02 76 02" + // list starts with 280 (F2.8) (280, 320, 350, )
-                    "c6 02 20 03 84 03 e8 03 4c 04 14 05 78 05 40 06" +
-                    "08 07 d0 07 98 08" +                               // list ends with 2200 (F22)
-                    "13 00" + // 19 values in array
-                    "18 01 40 01 5e 01 90 01 c2 01 f4 01 30 02 76 02" + // list starts with 280 (F2.8)
-                    "c6 02 20 03 84 03 e8 03 4c 04 14 05 78 05 40 06" +
-                    "08 07 d0 07 98 08" +                               // list ends with 2200 (F22)
-
-                    "0a 50" + // focus mode
-                    "04 00" + // data type. uint16
-                    "01 02 00 00" + // get (available), set (unavailable), unknown (uint8), factory value (data type)?
-                    "04 80" + // current value (AF-C)
-                    "02" + // enumeration (1=range, 2=enum)
-                    "04 00" + // 4 values in array
-                    // (AF-S = 0x0002, AF-C = 0x8004, DMF = 0x8060, MF = 0x0001)
-                    "02 00 04 80 06 80 01 00" +
-                    "04 00" + // 4 values in array
-                    "02 00 04 80 06 80 01 00" +
-
-                    "0b 50" + // metering mode
-                    "04 00" + // uint16.
-                    "01 01 00 00" + // Set and Get available
-                    "04 80" + // current value (Smart)
-                    "02" + // enum
-                    "06 00" + // 6 values
-                    // (Smart/Multi = 0x8001, Center Weighted = 0x8002, Whole Screen AVG = 0x8003
-                    //  , Spot (Standard) = 0x8004, Spot (Large) = 0x8005, Highlight = 0x8006)
-                    "01 80 02 80 04 80 05 80 03 80 06 80" +
-                    "06 00" + // 6 values
-                    "01 80 02 80 04 80 05 80 03 80 06 80" +
-
-                    "0c 50" + // flash mode
-                    "04 00" + // uint16
-                    "01 01 00 00" + // Set and Get available
-                    "03 00" + // current value
-                    "02" + // enum
-                    "03 00" + // 3 values (Available)
-                    // (Fill-flash = 0x0003, Slow Synchro = 0x8001, Rear Sync. = 0x8003)
-                    "03 00 01 80 03 80" +
-                    "05 00" + // 5 values (Supported)
-                    // (Fill-flash = 0x0003, Slow Synchro = 0x8001, Rear Sync. = 0x8003, Auto = 0x0001, Off = 0x0002)
-                    "02 00 01 00 03 00 01 80 03 80" +
+                    device.getPropData(deviceProps.whiteBalance).toHex() +
+                    device.getPropData(deviceProps.fNumber).toHex() +
+                    device.getPropData(deviceProps.focusMode).toHex() +
+                    device.getPropData(deviceProps.exposureMeteringMode).toHex() +
+                    device.getPropData(deviceProps.flashMode).toHex() +
 
                     "0e 50" + // Exposure programme mode
                     "06 00" + // uint32
@@ -287,7 +226,7 @@ define(['./packet', './event-loop', './loop-factory', './data-factory', './devic
 
                     "13 50" + // Still capture mode
                     "06 00" + // uint32
-                    "01 01" + // Get but no Set
+                    "01 02" + // Get but no Set
                     "00 00 00 00" + // Factory value
                     dataFactory.createDword(serverState.driveMode).toHex() + // Current value
                     "02" + // enum
@@ -338,15 +277,33 @@ define(['./packet', './event-loop', './loop-factory', './data-factory', './devic
                     "10 89 05 00 20 83 05 00 20 85 05 00 30 83 05 00" +
                     "30 85 05 00 28 80 06 00 18 80 06 00 29 80 07 00" +
                     "19 80 07 00" + 
-                    "00 d2 03 00 01 01 00 00 00 00 02 13" +
-                    "00 b8 0b 8c 0a fc 08 d0 07 a4 06 14 05 e8 03 bc" +
-                    "02 2c 01 00 00 d4 fe 44 fd 18 fc ec fa 5c f9 30" +
-                    "f8 04 f7 74 f5 48 f4 13 00 b8 0b 8c 0a fc 08 d0" +
-                    "07 a4 06 14 05 e8 03 bc 02 2c 01 00 00 d4 fe 44" +
-                    "fd 18 fc ec fa 5c f9 30 f8 04 f7 74 f5 48 f4 01" +
-                    "d2 02 00 01 01 00 01 02 07 00 01 1f 11 12 13 14" +
-                    "15 0e 00 01 1f 11 12 13 14 15 20 21 22 23 24 25" +
-                    "26 03 d2 02 00 01 01 00 01 02 03 00 01 02 03 03" +
+
+                    "00 d2" + // DPC Compensation? No idea what this is and not shown by Sony...
+                    "03 00" + // int16
+                    "01 01" + // settable and gettable
+                    "00 00" + // Factory value
+                    "00 00" + // Current value
+                    "02" + // Enum
+                    "13 00" + // 19 values
+                    "b8 0b 8c 0a fc 08 d0 07 a4 06 14 05 e8 03 bc 02" +
+                    "2c 01 00 00 d4 fe 44 fd 18 fc ec fa 5c f9 30 f8" +
+                    "04 f7 74 f5 48 f4" + 
+                    "13 00" + // 19 values 
+                    "b8 0b 8c 0a fc 08 d0 07 a4 06 14 05 e8 03 bc 02" +
+                    "2c 01 00 00 d4 fe 44 fd 18 fc ec fa 5c f9 30 f8" +
+                    "04 f7 74 f5 48 f4" +
+
+                    "01 d2" + // D-Range Optimise
+                    "02 00" + // uint8
+                    "01 01" + // settable and gettable
+                    "00" + // Factory value
+                    "01" + // Current value
+                    "02" + // Enum
+                    "07 00" + // 7 available values
+                    "01 1f 11 12 13 14 15" +
+                    "0e 00" + // 14 supported values1!
+                    "01 1f 11 12 13 14 15 20 21 22 23 24 25 26" + 
+                    "03 d2 02 00 01 01 00 01 02 03 00 01 02 03 03" +
                     "00 01 02 03 0d d2 06 00 01 02 ff ff ff ff 28 00" +
                     "01 00 02 37 00 0a 00 2c 01 0a 00 fa 00 0a 00 c8" +
                     "00 0a 00 96 00 0a 00 82 00 0a 00 64 00 0a 00 50" +
@@ -509,36 +466,45 @@ define(['./packet', './event-loop', './loop-factory', './data-factory', './devic
                 console.log("Received setControlDeviceA", request);
 
                 var propertyCode = request.argsData.getWord(0);
-                if (propertyCode == deviceProps.fNumber) {
-                    console.log("Trying to set FNumber");
+                console.log("Setting", request.argsData.slice(0, 2).toBigEndianHex());
 
-                    startDataPacketCallbacks[request.transactionId] = function (content) {
-                        // do nothing
-                    };
-                    dataPacketCallbacks[request.transactionId] = function (content) {
-                        var value = content.payloadData.getWord(0);
-                        let paramData = content.payloadData.slice(0,2);
+                startDataPacketCallbacks[request.transactionId] = function (content) {
+                    // do nothing
+                };
+                dataPacketCallbacks[request.transactionId] = function (content) {
+
+                    let prop = device.getProp(propertyCode);
+
+                    if (prop) {
+
+                        let value;
+                        let paramData;
+                        switch (prop.dataType) {
+                            case devicePropTypes.int8:
+                            case devicePropTypes.uint8:
+                                value = content.payloadData.getByte(0);
+                                paramData = content.payloadData.slice(0, 1);
+                            break;
+                            case devicePropTypes.int16:
+                            case devicePropTypes.uint16:
+                                value = content.payloadData.getWord(0);
+                                paramData = content.payloadData.slice(0, 2);
+                            break;
+                            case devicePropTypes.uint32:
+                                value = content.payloadData.getDword(0);
+                                paramData = content.payloadData.slice(0, 4);
+                            default:
+                            break;
+                        }
+
                         console.log("setting", value, paramData.toHex(), paramData.toBigEndianHex());
-                        serverState.fNumber = value;
-                    };
-                    endDataPacketCallbacks[request.transactionId] = function (content) {
-                        eventLoop.scheduleSend(packet.createEventPacket(content.transactionId));
-                    };
-                } else if (propertyCode == deviceProps.stillCaptureMode) {
-                    console.log("Trying to set still capture mode");
-                    startDataPacketCallbacks[request.transactionId] = function (content) {
-                        // do nothing
-                    };
-                    dataPacketCallbacks[request.transactionId] = function (content) {
-                        var value = content.payloadData.getDword(0);
-                        let paramData = content.payloadData.slice(0,4);
-                        console.log("setting", value, paramData.toHex(), paramData.toBigEndianHex());
-                        serverState.driveMode = value;
-                    };
-                    endDataPacketCallbacks[request.transactionId] = function (content) {
-                        eventLoop.scheduleSend(packet.createEventPacket(content.transactionId));
-                    };
-                }
+                        device.setPropValue(propertyCode, value);
+                    }
+                };
+
+                endDataPacketCallbacks[request.transactionId] = function (content) {
+                    eventLoop.scheduleSend(packet.createEventPacket(content.transactionId));
+                };
 
                 loop.scheduleSend(packet.createCmdResponse(operationCodes.okay, request.transactionId));
             break;
