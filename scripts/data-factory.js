@@ -174,7 +174,7 @@ define(['./util'], function (util) {
         var mapping = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'];
         var result = "";
         for (var c of this.arr) {
-            result = result + mapping[(c >>> 4)] + mapping[c % 16]
+            result = result + mapping[(c >>> 4)] + mapping[c % 16] + ' '
         }
         return result;
     };

@@ -65,7 +65,7 @@ define(['./packet', './event-loop', './loop-factory', './data-factory', './devic
         setControlDeviceB: 0x9207,
         getAllDevicePropData: 0x9209,
 
-        unknownHandshakeRequest: 0x920D,
+        unknownHandshakeRequest: 0x920D
     };
 
     Object.freeze(operationCodes);
@@ -101,27 +101,54 @@ define(['./packet', './event-loop', './loop-factory', './data-factory', './devic
             break;
             case operationCodes.getDeviceInfo:
 
-                hexString = "64 00 11 00 00 00 64 00 14 53 00 6f 00 6e 00 79" +
-                    "00 20 00 50 00 54 00 50 00 20 00 45 00 78 00 74" +
-                    "00 65 00 6e 00 73 00 69 00 6f 00 6e 00 73 00 00" +
-                    "00 00 00 18 00 00 00 01 10 02 10 03 10 04 10 05" +
+                hexString = "64 00" + // Standard Version (100)
+                    "11 00 00 00" + // Vendor Extension ID
+                    "64 00" + // VendorExtensionVersion
+
+                    "14" + // 20 characters!
+                    "53 00 6f 00 6e 00 79 00" + // VendorExtensionDesc ("Sony PTP Extensions")
+                    "20 00 50 00 54 00 50 00 20 00 45 00 78 00 74 00" +
+                    "65 00 6e 00 73 00 69 00 6f 00 6e 00 73 00 00 00" +
+
+                    "00 00" + // FunctionalMode
+
+                    "18 00 00 00" + // Number of items in OperationsSupported (24)
+                    "01 10 02 10 03 10 04 10 05" +
                     "10 06 10 07 10 08 10 09 10 0a 10 1b 10 01 92 02" +
                     "92 05 92 07 92 09 92 0a 92 0b 92 0c 92 0d 92 01" +
-                    "98 02 98 03 98 05 98 07 00 00 00 01 c2 02 c2 03" +
-                    "c2 04 c2 05 c2 06 c2 07 c2 00 00 00 00 00 00 00" +
-                    "00 03 00 00 00 01 38 01 b3 01 b1 11 53 00 6f 00" +
+                    "98 02 98 03 98 05 98" + 
+
+                    "07 00 00 00" + // Number of items in EventsSupported (7)
+                    "01 c2 02 c2 03 c2 04 c2 05 c2 06 c2 07 c2" + 
+
+                    "00 00 00 00" + // Number of device properties supported 
+                    "00 00 00 00" + // Number of capture formats
+                    "03 00 00 00" + // Number of image formats supported  
+                    // 0x3801 = JPEG, 0xb301 = ???, 0xb101 = ???
+                    "01 38 01 b3 01 b1" +
+
+                    "11" + // Manufacturer length (16)
+
+                    "53 00 6f 00" +
                     "6e 00 79 00 20 00 43 00 6f 00 72 00 70 00 6f 00" +
-                    "72 00 61 00 74 00 69 00 6f 00 6e 00 00 00 07 49" +
-                    "00 4c 00 43 00 45 00 2d 00 39 00 00 00 05 36 00" +
-                    "2e 00 30 00 30 00 00 00 21 30 00 30 00 30 00 30" +
-                    "00 30 00 30 00 30 00 30 00 30 00 30 00 30 00 30" +
-                    "00 30 00 30 00 30 00 30 00 33 00 32 00 38 00 32" +
-                    "00 38 00 39 00 33 00 30 00 30 00 33 00 37 00 37" +
-                    "00 37 00 39 00 38 00 32 00 00 00";
+                    "72 00 61 00 74 00 69 00 6f 00 6e 00 00 00" +
+
+                    "07" + // Model length (7)
+                    "49 00 4c 00 43 00 45 00 2d 00 39 00 00 00" +
+
+                    "05" + // Device Version Length (5)
+                    "36 00 2e 00 30 00 30 00 00 00" +
+
+                    "21" + // Serial number (33)
+                    "30 00 30 00 30 00 30 00" +
+                    "30 00 30 00 30 00 30 00 30 00 30 00 30 00 30 00" +
+                    "30 00 30 00 30 00 30 00 33 00 32 00 38 00 32 00" +
+                    "38 00 39 00 33 00 30 00 30 00 33 00 37 00 37 00" +
+                    "37 00 39 00 38 00 32 00 00 00";
                 let a9DeviceInfoPayload = dataFactory.createFromHexString(hexString);
 
                 console.log("Received Get_Device_Info", request);
-                dataContainer = packet.createDataContainer(request.sessionId, a9DeviceInfoPayload);
+                dataContainer = packet.createDataContainer(request.transactionId, a9DeviceInfoPayload);
                 for (var data of dataContainer) {
                   loop.scheduleSend(data);
                 }
@@ -131,8 +158,8 @@ define(['./packet', './event-loop', './loop-factory', './data-factory', './devic
 
                 hexString = "00 00 00 00 00 00 00 00";
                 let sdioConnectPayload = dataFactory.createFromHexString(hexString);
-
-                dataContainer = packet.createDataContainer(request.sessionId, sdioConnectPayload);
+                console.log("Received SDIO_Connect", request);
+                dataContainer = packet.createDataContainer(request.transactionId, sdioConnectPayload);
                 for (var data of dataContainer) {
                   loop.scheduleSend(data);
                 }
@@ -141,11 +168,32 @@ define(['./packet', './event-loop', './loop-factory', './data-factory', './devic
             case operationCodes.sdioGetExtDeviceInfo:
                 // this list contains all available property codes starting with 0x5005 and
                 // ending with 0xd2dd
-                hexString = "2c 01 48 00 00 00" +
-                    "05 50 07 50 0a 50 0b 50 0c 50" +
-                    "0e 50 10 50 13 50 00 d2 01 d2 03 d2 0d d2 0e d2" +
-                    "0f d2 10 d2 11 d2 13 d2 14 d2 15 d2 17 d2 18 d2" +
-                    "1b d2 1c d2 1d d2 1e d2 1f d2 21 d2 22 d2 23 d2" +
+                hexString = "2c 01" +
+                    "48 00 00 00" + // 72 distinct property codes
+                    "05 50" + // White balance
+                    "07 50" + // F Number
+                    "0a 50" + // Focus Mode
+                    "0b 50" + // Exposure metering
+                    "0c 50" + // Flash mode
+                    "0e 50" + // Exposure programme mode
+                    "10 50" + // Exposure bias compensation
+                    "13 50" + // Still capture mode
+                    "00 d2" + // DPC Compensation
+                    "01 d2" + // DRO Optimize
+                    "03 d2" + // Image Size
+                    "0d d2" + // Shutter Speed
+                    "0e d2" + // Unknown
+                    "0f d2" + // Color temp
+                    "10 d2" + // CC Filter
+                    "11 d2" + // Aspect Ratio
+                    "13 d2" + // Focus Found
+                    "14 d2" + 
+                    "15 d2" + 
+                    "17 d2" + 
+                    "18 d2" +
+                    "1b d2" + 
+                    "1c d2" + 
+                    "1d d2 1e d2 1f d2 21 d2 22 d2 23 d2" +
                     "2a d2 2c d2 31 d2 35 d2 36 d2 3e d2 3f d2 40 d2" +
                     "41 d2 42 d2 43 d2 44 d2 45 d2 46 d2 47 d2 48 d2" +
                     "49 d2 4a d2 4c d2 4e d2 4f d2 50 d2 51 d2 52 d2" +
@@ -157,7 +205,7 @@ define(['./packet', './event-loop', './loop-factory', './data-factory', './devic
                     "db d2 dc d2 dd d2";
                 let sdioGetExtDeviceInfoPayload = dataFactory.createFromHexString(hexString);
 
-                dataContainer = packet.createDataContainer(request.sessionId, sdioGetExtDeviceInfoPayload);
+                dataContainer = packet.createDataContainer(request.transactionId, sdioGetExtDeviceInfoPayload);
                 for (var data of dataContainer) {
                   loop.scheduleSend(data);
                 }
@@ -174,182 +222,248 @@ define(['./packet', './event-loop', './loop-factory', './data-factory', './devic
 
                 // TODO(gswirski): this should be relatively easy to break
                 // down once we know how to handle single properties
-                hexString = "48 00 00 00 00 00 00 00" + // 72 distinct properties seems too high?
+                hexString = "48 00 00 00 00 00 00 00 " + // 72 distinct properties seems too high?
 
-                    device.getPropData(deviceProps.whiteBalance).toHex() +
-                    device.getPropData(deviceProps.fNumber).toHex() +
-                    device.getPropData(deviceProps.focusMode).toHex() +
-                    device.getPropData(deviceProps.exposureMeteringMode).toHex() +
-                    device.getPropData(deviceProps.flashMode).toHex() +
-                    device.getPropData(deviceProps.exposureProgramMode).toHex() +
-                    device.getPropData(deviceProps.exposureBiasCompensation).toHex() +
-                    device.getPropData(deviceProps.stillCaptureMode).toHex() +
+                    device.getAllPropData().toHex() +
 
-                    "00 d2" + // DPC Compensation? No idea what this is and not shown by Sony...
-                    "03 00" + // int16
-                    "01 01" + // settable and gettable
-                    "00 00" + // Factory value
-                    "00 00" + // Current value
-                    "02" + // Enum
-                    "13 00" + // 19 values
-                    "b8 0b 8c 0a fc 08 d0 07 a4 06 14 05 e8 03 bc 02" +
-                    "2c 01 00 00 d4 fe 44 fd 18 fc ec fa 5c f9 30 f8" +
-                    "04 f7 74 f5 48 f4" + 
-                    "13 00" + // 19 values 
-                    "b8 0b 8c 0a fc 08 d0 07 a4 06 14 05 e8 03 bc 02" +
-                    "2c 01 00 00 d4 fe 44 fd 18 fc ec fa 5c f9 30 f8" +
-                    "04 f7 74 f5 48 f4" +
+                    "2c d2 " + // Unknown
+                    "04 00 " + // uint16
+                    "01 01 " + // Get and Set
+                    "00 00 " + // Factory
+                    "06 02 " + // Current
+                    "02 " + // Enum
+                    "0e 00 " + // 14 available values
+                    "01 00 02 00 " +
+                    "03 00 01 01 02 01 03 01 04 01 01 02 02 02 03 02 " +
+                    "04 02 05 02 06 02 07 02 " +
+                    "0e 00 " + // 14 supported values
+                    "01 00 02 00 03 00 " +
+                    "01 01 02 01 03 01 04 01 01 02 02 02 03 02 04 02 " +
+                    "05 02 06 02 07 02 " + 
 
-                    "01 d2" + // D-Range Optimise
-                    "02 00" + // uint8
-                    "01 01" + // settable and gettable
-                    "00" + // Factory value
-                    "01" + // Current value
-                    "02" + // Enum
-                    "07 00" + // 7 available values
-                    "01 1f 11 12 13 14 15" +
-                    "0e 00" + // 14 supported values1!
-                    "01 1f 11 12 13 14 15 20 21 22 23 24 25 26" + 
-                    "03 d2 02 00 01 01 00 01 02 03 00 01 02 03 03" +
-                    "00 01 02 03 0d d2 06 00 01 02 ff ff ff ff 28 00" +
-                    "01 00 02 37 00 0a 00 2c 01 0a 00 fa 00 0a 00 c8" +
-                    "00 0a 00 96 00 0a 00 82 00 0a 00 64 00 0a 00 50" +
-                    "00 0a 00 3c 00 0a 00 32 00 0a 00 28 00 0a 00 20" +
-                    "00 0a 00 19 00 0a 00 14 00 0a 00 10 00 0a 00 0d" +
-                    "00 0a 00 0a 00 0a 00 08 00 0a 00 06 00 0a 00 05" +
-                    "00 0a 00 04 00 03 00 01 00 04 00 01 00 05 00 01" +
-                    "00 06 00 01 00 08 00 01 00 0a 00 01 00 0d 00 01" +
-                    "00 0f 00 01 00 14 00 01 00 19 00 01 00 1e 00 01" +
-                    "00 28 00 01 00 32 00 01 00 3c 00 01 00 50 00 01" +
-                    "00 64 00 01 00 7d 00 01 00 a0 00 01 00 c8 00 01" +
-                    "00 fa 00 01 00 40 01 01 00 90 01 01 00 f4 01 01" +
-                    "00 80 02 01 00 20 03 01 00 e8 03 01 00 e2 04 01" +
-                    "00 40 06 01 00 d0 07 01 00 c4 09 01 00 80 0c 01" +
-                    "00 a0 0f 01 00 88 13 01 00 00 19 01 00 40 1f 01" +
-                    "00 37 00 0a 00 2c 01 0a 00 fa 00 0a 00 c8 00 0a" +
-                    "00 96 00 0a 00 82 00 0a 00 64 00 0a 00 50 00 0a" +
-                    "00 3c 00 0a 00 32 00 0a 00 28 00 0a 00 20 00 0a" +
-                    "00 19 00 0a 00 14 00 0a 00 10 00 0a 00 0d 00 0a" +
-                    "00 0a 00 0a 00 08 00 0a 00 06 00 0a 00 05 00 0a" +
-                    "00 04 00 03 00 01 00 04 00 01 00 05 00 01 00 06" +
-                    "00 01 00 08 00 01 00 0a 00 01 00 0d" +
-                    "00 01 00 0f 00 01 00 14 00 01 00 19" +
-                    "00 01 00 1e 00 01 00 28 00 01 00 32 00 01 00 3c" +
-                    "00 01 00 50 00 01 00 64 00 01 00 7d 00 01 00 a0" +
-                    "00 01 00 c8 00 01 00 fa 00 01 00 40 01 01 00 90" +
-                    "01 01 00 f4 01 01 00 80 02 01 00 20 03 01 00 e8" +
-                    "03 01 00 e2 04 01 00 40 06 01 00 d0 07 01 00 c4" +
-                    "09 01 00 80 0c 01 00 a0 0f 01 00 88 13 01 00 00" +
-                    "19 01 00 40 1f 01 00 0e d2 02 00 00 01 00 06 02" +
-                    "00 00 00 00 0f d2 04 00 01 00 00 00 c4 09 01 c4" +
-                    "09 ac 26 64 00 10 d2 02 00 01 01 00 c0 01 a4 dc" +
-                    "01 11 d2 02 00 01 01 00 01 02 03 00 01 02 04 03" +
-                    "00 01 02 04 13 d2 02 00 00 01 00 01 02 00 00 00" +
-                    "00 14 d2 06 00 00 01 ff ff ff ff ff ff ff ff 01" +
-                    "00 00 00 00 ff ff ff ff 01 00 00 00 15 d2 04 00" +
-                    "00 01 00 00 00 00 01 00 00 ff ff 01 00 17 d2 02" +
-                    "00 00 01 00 01 02 00 00 00 00 18 d2 01 00 00 01" +
-                    "00 35 01 ff 64 01 1b d2 04 00 01 02 00 00 00 80" +
-                    "02 01 00 00 80 11 00 00 80 01 80 02 80 03 80 04" +
-                    "80 05 80 10 80 20 80 21 80 30 80 40 80 50 80 51" +
-                    "80 52 80 53 80 60 80 90 80 1c d2 02 00 01 01 00" +
-                    "c0 01 a4 dc 02 1d d2 02 00 00 02 00 00 01 00 02" +
-                    "01 1e d2 06 00 01 01 ff ff ff 00 ff ff ff 00 02" +
-                    "26 00 ff ff ff 00 32 00 00 10 40 00 00 10 50 00" +
-                    "00 10 64 00 00 00 7d 00 00 00 a0 00 00 00 c8 00" +
-                    "00 00 fa 00 00 00 40 01 00 00 90 01 00 00 f4 01" +
-                    "00 00 80 02 00 00 20 03 00 00 e8 03 00 00 e2 04" +
-                    "00 00 40 06 00 00 d0 07 00 00 c4 09 00 00 80 0c" +
-                    "00 00 a0 0f 00 00 88 13 00 00 00 19 00 00 40 1f" +
-                    "00 00 10 27 00 00 00 32 00 00 80 3e 00 00 20 4e" +
-                    "00 00 00 64 00 00 00 7d 00 00 40 9c 00 00 00 c8" +
-                    "00 00 00 fa 00 10 80 38 01 10 00 90 01 10 00 f4" +
-                    "01 10 00 71 02 10 00 20 03 10 26 00 ff ff ff 00" +
-                    "32 00 00 10 40 00 00 10 50 00 00 10 64 00 00 00" +
-                    "7d 00 00 00 a0 00 00 00 c8 00 00 00 fa 00 00 00" +
-                    "40 01 00 00 90 01 00 00 f4 01 00 00 80 02 00 00" +
-                    "20 03 00 00 e8 03 00 00 e2 04 00 00 40 06 00 00" +
-                    "d0 07 00 00 c4 09 00 00 80 0c 00 00 a0 0f 00 00" +
-                    "88 13 00 00 00 19 00 00 40 1f 00 00 10 27 00 00" +
-                    "00 32 00 00 80 3e 00 00 20 4e 00 00 00 64 00 00" +
-                    "00 7d 00 00 40 9c 00 00 00 c8 00 00 00 fa 00 10" +
-                    "80 38 01 10 00 90 01 10 00 f4 01 10 00 71 02 10" +
-                    "00 20 03 10 1f d2 02 00 00 01 00 01 02 00 00 00" +
-                    "00 21 d2 02 00 00 01 00 01 02 00 00 00 00 22 d2" +
-                    "04 00 01 01 00 00 01 00 02 03 00 01 00 11 00 10" +
-                    "00 03 00 01 00 11 00 10 00 23 d2 ff ff 01 01 00" +
-                    "00 00 2a d2 02 00 00 00 00 01 02 00 00 00 00 2c" +
-                    "d2 04 00 01 01 00 00 06 02 02 0e 00 01 00 02 00" +
-                    "03 00 01 01 02 01 03 01 04 01 01 02 02 02 03 02" +
-                    "04 02 05 02 06 02 07 02 0e 00 01 00 02 00 03 00" +
-                    "01 01 02 01 03 01 04 01 01 02 02 02 03 02 04 02" +
-                    "05 02 06 02 07 02 31 d2 02 00 01 01 00 01 02 02" +
-                    "00 01 02 02 00 01 02 35 d2 02 00 00 00 00 00 02" +
-                    "02 00 00 01 02 00 00 01 36 d2 02 00 00 01 00 01" +
-                    "02 02 00 00 01 02 00 00 01 3e d2 02 00 01 00 00" +
-                    "00 02 00 00 00 00 3f d2 02 00 01 00 00 00 02 00" +
-                    "00 00 00 40 d2 02 00 01 01 00 0e 02 13 00 01 02" +
-                    "03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f 10 11 12" +
-                    "13 13 00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d" +
-                    "0e 0f 10 11 12 13 41 d2 02 00 01 01 00 08 02 03" +
-                    "00 08 09 03 03 00 08 09 03 42 d2 04 00 01 01 00" +
-                    "00 21 00 02 02 00 24 00 21 00 02 00 24 00 21 00" +
-                    "43 d2 04 00 01 00 00 00 02 00 02 00 00 00 00 44" +
-                    "d2 04 00 01 00 00 00 02 00 02 00 00 00 00 45 d2" +
-                    "02 00 01 00 00 01 02 00 00 00 00 46 d2 02 00 01" +
-                    "00 00 01 02 00 00 00 00 47 d2 02 00 01 01 00 00" +
-                    "02 04 00 00 01 02 03 04 00 00 01 02 03 48 d2 02" +
-                    "00 00 02 00 02 02 00 00 00 00 49 d2 06 00 00 00" +
-                    "00 00 00 00 00 00 00 00 01 00 00 00 00 ff ff ff" +
-                    "ff 01 00 00 00 4a d2 06 00 00 00 00 00 00 00 00" +
-                    "00 00 00 01 00 00 00 00 ff ff ff ff 01 00 00 00" +
-                    "4c d2 02 00 00 02 00 64 01 00 00 01 4e d2 04 00" +
-                    "00 01 00 00 01 00 02 00 00 00 00 4f d2 02 00 01" +
-                    "01 00 01 02 02 00 01 02 02 00 01 02 50 d2 02 00" +
-                    "00 01 00 00 02 00 00 00 00 51 d2 02 00 00 02 00" +
-                    "00 01 00 02 01 52 d2 02 00 01 01 00 01 02 03 00" +
-                    "01 02 03 03 00 01 02 03 53 d2 02 00 01 01 00 01" +
-                    "02 03 00 01 02 03 03 00 01 02 03 54 d2 08 00 01" +
-                    "02 00 00 00 00 00 00 00 00 f0 00 40 01 00 00 00" +
-                    "00 02 00 00 04 00 ff ff ff ff 00 00 00 00 ff ff" +
-                    "ff ff 0a 00 00 00 ff ff ff ff 2f 00 00 00 ff ff" +
-                    "ff ff 5e 00 00 00 55 d2 02 00 01 01 00 04 02 05" +
-                    "00 05 04 03 02 01 05 00 05 04 03 02 01 56 d2 02" +
-                    "00 00 00 00 04 02 00 00 00 00 57 d2 06 00 00 00" +
-                    "00 00 00 00 00 00 00 00 01 00 00 00 00 ff ff ff" +
-                    "ff 01 00 00 00 58 d2 06 00 00 00 00 00 00 00 00" +
-                    "00 00 00 01 00 00 00 00 ff ff ff ff 01 00 00 00" +
-                    "59 d2 02 00 01 02 00 01 02 00 00 00 00 5a d2 02" +
-                    "00 01 01 00 00 02 02 00 00 01 02 00 00 01 5b d2" +
-                    "02 00 00 00 00 00 02 02 00 00 01 02 00 00 01 5c" +
-                    "d2 06 00 01 00 00 00 00 00 e8 03 00 00 01 e8 03" +
-                    "00 00 e8 03 00 00 64 00 00 00 5d d2" +
-                    "06 00 00 00 00 00 00 00 00 00 00 01" +
-                    "00 5f d2 02 00 01 02 00 01 02 00 00 00 00 60 d2" +
-                    "02 00 00 00 00 01 02 00 00 00 00 61 d2 06 00 00" +
-                    "00 00 00 00 00 00 00 00 00 01 00 00 00 00 ff ff" +
-                    "ff ff 01 00 00 00 62 d2 02 00 01 01 00 00 02 02" +
-                    "00 01 00 02 00 01 00 63 d2 02 00 01 01 00 00 02" +
-                    "02 00 01 00 02 00 01 00 64 d2 02 00 00 01 00 00" +
-                    "02 00 00 00 00 67 d2 06 00 00 01 00 00 00 00 00" +
-                    "00 00 00 01 00 00 00 00 e0 01 80 02 01 00 00 00" +
-                    "78 d2 ff ff 00 02 00 62 68 00 74 00 74 00 70 00" +
-                    "3a 00 2f 00 2f 00 31 00 39 00 32 00 2e 00 31 00" +
-                    "36 00 38 00 2e 00 31 00 32 00 32 00 2e 00 31 00" +
-                    "3a 00 36 00 30 00 31 00 35 00 32 00 2f 00 6c 00" +
-                    "69 00 76 00 65 00 76 00 69 00 65 00 77 00 73 00" +
-                    "74 00 72 00 65 00 61 00 6d 00 3f 00 25 00 32 00" +
-                    "31 00 31 00 32 00 33 00 34 00 25 00 32 00 31 00" +
-                    "25 00 32 00 61 00 25 00 33 00 61 00 25 00 32 00" +
-                    "61 00 25 00 33 00 61 00 69 00 6d 00 61 00 67 00" +
-                    "65 00 25 00 32 00 66 00 6a 00 70 00 65 00 67 00" +
-                    "25 00 33 00 61 00 25 00 32 00 61 00 25 00 32 00" +
-                    "31 00 25 00 32 00 31 00 25 00 32 00 31 00 25 00" +
+                    "31 d2 " + // Unknown
+                    "02 00 " + // uint8
+                    "01 01 " + // Get and set 
+                    "00 " + // Factory
+                    "01 " + // Current
+                    "02 " + // Enum
+                    "02 00 " + // 2 values
+                    "01 02 " + // 1 and 2
+                    "02 00 " + // 2 values
+                    "01 02 " + // 1 and 2
+
+                    "35 d2 " + // Unknown
+                    "02 00 " + // uint8
+                    "01 01 " + // Erm?
+                    "00 " + // Factory
+                    "00 " + // Current
+                    "02 " + // Array
+                    "02 00 " + // 2 values
+                    "00 01 " + // 0 and 1
+                    "02 00 " + 
+                    "00 01 " + // 0 and 1
+
+                    "36 d2 " + // Unknown
+                    "02 00 " + // uint8
+                    "01 01 " + // ???
+                    "00 " + // Factory
+                    "01 " + // Current
+                    "02 " + // Enum
+                    "02 00 " + // 2 values
+                    "00 01 " + 
+                    "02 00 " + 
+                    "00 01 " + 
+
+                    "3e d2 " + // Unknown
+                    "02 00 " + // uint8 
+                    "01 01 " + // ??
+                    "00 " +
+                    "00 " +
+                    "02 " +
+                    "00 00 00 00 " +
+
+                    "3f d2 " + // Unknown
+                    "02 00 " + // uint8
+                    "01 01 " + 
+                    "00 " +
+                    "00 " +  
+                    "02 " +
+                    "00 00 " +
+                    "00 00 " + 
+
+                    "40 d2 " + // Unknown
+                    "02 00 " + // uint8
+                    "01 01 " + // Get and set
+                    "00 " + // Factory 
+                    "0e " + // Current 
+                    "02 " + // Array 
+                    "13 00 " + // 19 items
+                    "01 02 03 " + 
+                    "04 05 06 07 08 09 0a 0b 0c 0d 0e 0f 10 11 12 13 " +
+                    "13 00 " + 
+                    "01 02 03 04 05 06 07 08 09 0a 0b 0c 0d " +
+                    "0e 0f 10 11 12 13 " +
+
+                    "41 d2 " + // Unknown
+                    "02 00 " + // uint8
+                    "01 01 " + // Get and Sete
+                    "00 " + // Factory
+                    "08 " + // Current
+                    "02 " + // Array
+                    "03 00 " + // 3 values
+                    "08 09 03 " +
+                    "03 00 " + // 3 values
+                    "08 09 03 " +
+
+                    "42 d2 " + // Unknown
+                    "04 00 " + // uint16
+                    "01 01 " + // Get and Set
+                    "00 00 " + // Factory
+                    "21 00 " + // Current
+                    "02 " + // Array
+                    "02 00 " + // 2 values
+                    "24 00 21 00 " +
+                    "02 00 " + 
+                    "24 00 21 00 " +
+
+                    "43 d2 " + // Unknown
+                    "04 00 " +  // uint16
+                    "01 01 " + // GetSet, unknown
+                    "00 00 " + // Factory
+                    "02 00 " + // Current 
+                    "02 " + // Enum
+                    "00 00 00 00 " + // No values
+
+                    "44 d2 " + // Unknown
+                    "04 00 " + // uint16
+                    "01 01 " + // GetSet, unknown
+                    "00 00 " + // Factory
+                    "02 00 " + // Current
+                    "02 " + // Enum
+                    "00 00 00 00 " + // No values
+
+                    "45 d2 " + // Unknown
+                    "02 00 " + // uint8
+                    "01 01 " + // GetSet, unknown
+                    "00 " + // Factory
+                    "01 " +  // Current
+                    "02 " + // Enum
+                    "00 00 00 00 " + // No values
+
+                    "46 d2 " + // Unknown
+                    "02 00 " + // uint8
+                    "01 01 " + // GetSet, unknown
+                    "00 " + // Factory
+                    "01 " + // Current
+                    "02 " + // Enum
+                    "00 00 00 00 " + // No values
+
+                    "47 d2 " + // Unknown 
+                    "02 00 " + // uint8 
+                    "01 01 " + // GetSet, unknown 
+                    "00 " + // Factory
+                    "00 " + // Current
+                    "02 " + // Enum
+                    "04 00 " + // 4 available Values
+                    "00 01 02 03 " + 
+                    "04 00 " + // 4 supported values
+                    "00 01 02 03 " +
+
+                    "48 d2 " + // Unknown
+                    "02 00 " + // uint8 
+                    "01 01 " + // Get, Unknown 
+                    "00 " + // Factory
+                    "02 " + // Current
+                    "02 " + // Enum 
+                    "00 00 00 00 " + // No values
+
+                    "49 d2 " + // Unknown
+                    "06 00 " + // uint32
+                    "01 01 " + // Get, Unknown
+                    "00 00 00 00 " + // Factory
+                    "00 00 00 00 " + // Current 
+                    "01 " + // Range
+                    "00 00 00 00 " + // zero
+                    "ff ff ff ff " + // max uint32
+                    "01 00 00 00 " + // 1 
+
+                    "4a d2 " + // Unknown
+                    "06 00 " + // uint32
+                    "01 01 " + // Get, Unknown
+                    "00 00 00 00 " + // Factory
+                    "00 00 00 00 " + // Current 
+                    "01 " + // Range
+                    "00 00 00 00 " + // zero
+                    "ff ff ff ff " + // max uint32
+                    "01 00 00 00 " + // 1 
+
+                    "4c d2 " + // Unknown
+                    "02 00 " + // uint8
+                    "01 01 " + // Get, Unknown
+                    "00 " + // Factory
+                    "64 " + // Current 
+                    "01 " + // Range
+                    "00 " + // 0 
+                    "00 " + // 0
+                    "01 " + // 1 
+
+                    "4e d2 " + // Unknown
+                    "04 00 " + // uint16
+                    "01 01 " + // GetSet, Unknown
+                    "00 00 " +
+                    "01 00 " +
+                    "02 " +
+                    "00 00 00 00 " +
+
+                    "4f d2 " + // unknown
+                    "02 00 " + // uint8
+                    "01 01" +
+                    "00 01 02 02 00 01 02 02 00 01 02 50 d2 02 00 " +
+                    "00 01 00 00 02 00 00 00 00 51 d2 02 00 00 02 00 " +
+                    "00 01 00 02 01 52 d2 02 00 01 01 00 01 02 03 00 " +
+                    "01 02 03 03 00 01 02 03 53 d2 02 00 01 01 00 01 " +
+                    "02 03 00 01 02 03 03 00 01 02 03 54 d2 08 00 01 " +
+                    "02 00 00 00 00 00 00 00 00 f0 00 40 01 00 00 00 " +
+                    "00 02 00 00 04 00 ff ff ff ff 00 00 00 00 ff ff " +
+                    "ff ff 0a 00 00 00 ff ff ff ff 2f 00 00 00 ff ff " +
+                    "ff ff 5e 00 00 00 55 d2 02 00 01 01 00 04 02 05 " +
+                    "00 05 04 03 02 01 05 00 05 04 03 02 01 56 d2 02 " +
+                    "00 00 00 00 04 02 00 00 00 00 57 d2 06 00 00 00 " +
+                    "00 00 00 00 00 00 00 00 01 00 00 00 00 ff ff ff " +
+                    "ff 01 00 00 00 58 d2 06 00 00 00 00 00 00 00 00 " +
+                    "00 00 00 01 00 00 00 00 ff ff ff ff 01 00 00 00 " +
+                    "59 d2 02 00 01 02 00 01 02 00 00 00 00 5a d2 02 " +
+                    "00 01 01 00 00 02 02 00 00 01 02 00 00 01 5b d2 " +
+                    "02 00 00 00 00 00 02 02 00 00 01 02 00 00 01 5c " +
+                    "d2 06 00 01 00 00 00 00 00 e8 03 00 00 01 e8 03 " +
+                    "00 00 e8 03 00 00 64 00 00 00 5d d2 " +
+                    "06 00 00 00 00 00 00 00 00 00 00 01 " +
+                    "00 5f d2 02 00 01 02 00 01 02 00 00 00 00 60 d2 " +
+                    "02 00 00 00 00 01 02 00 00 00 00 61 d2 06 00 00 " +
+                    "00 00 00 00 00 00 00 00 00 01 00 00 00 00 ff ff " +
+                    "ff ff 01 00 00 00 62 d2 02 00 01 01 00 00 02 02 " +
+                    "00 01 00 02 00 01 00 63 d2 02 00 01 01 00 00 02 " +
+                    "02 00 01 00 02 00 01 00 64 d2 02 00 00 01 00 00 " +
+                    "02 00 00 00 00 67 d2 06 00 00 01 00 00 00 00 00 " +
+                    "00 00 00 01 00 00 00 00 e0 01 80 02 01 00 00 00 " +
+                    "78 d2 ff ff 00 02 00 62 68 00 74 00 74 00 70 00 " +
+                    "3a 00 2f 00 2f 00 31 00 39 00 32 00 2e 00 31 00 " +
+                    "36 00 38 00 2e 00 31 00 32 00 32 00 2e 00 31 00 " +
+                    "3a 00 36 00 30 00 31 00 35 00 32 00 2f 00 6c 00 " +
+                    "69 00 76 00 65 00 76 00 69 00 65 00 77 00 73 00 " +
+                    "74 00 72 00 65 00 61 00 6d 00 3f 00 25 00 32 00 " +
+                    "31 00 31 00 32 00 33 00 34 00 25 00 32 00 31 00 " +
+                    "25 00 32 00 61 00 25 00 33 00 61 00 25 00 32 00 " +
+                    "61 00 25 00 33 00 61 00 69 00 6d 00 61 00 67 00 " +
+                    "65 00 25 00 32 00 66 00 6a 00 70 00 65 00 67 00 " +
+                    "25 00 33 00 61 00 25 00 32 00 61 00 25 00 32 00 " +
+                    "31 00 25 00 32 00 31 00 25 00 32 00 31 00 25 00 " +
                     "32 00 31 00 25 00 32 00 31 00 00 00 00";
+
                 let allDevicePropDataPayload = dataFactory.createFromHexString(hexString)
                 console.log("Received Get_All_Device_Prop_Data request", request);
 
-                dataContainer = packet.createDataContainer(request.sessionId, allDevicePropDataPayload);
+                dataContainer = packet.createDataContainer(request.transactionId, allDevicePropDataPayload);
                 for (var data of dataContainer) {
                   loop.scheduleSend(data);
                 }
@@ -362,7 +476,7 @@ define(['./packet', './event-loop', './loop-factory', './data-factory', './devic
 
                 console.log("Received 0x920D request", request);
 
-                dataContainer = packet.createDataContainer(request.sessionId, unknownHandshakePayload);
+                dataContainer = packet.createDataContainer(request.transactionId, unknownHandshakePayload);
                 for (var data of dataContainer) {
                   loop.scheduleSend(data);
                 }
@@ -373,7 +487,6 @@ define(['./packet', './event-loop', './loop-factory', './data-factory', './devic
                 console.log("Received setControlDeviceA", request);
 
                 var propertyCode = request.argsData.getWord(0);
-                console.log("Setting", request.argsData.slice(0, 2).toBigEndianHex());
 
                 startDataPacketCallbacks[request.transactionId] = function (content) {
                     // do nothing
@@ -404,7 +517,7 @@ define(['./packet', './event-loop', './loop-factory', './data-factory', './devic
                             break;
                         }
 
-                        console.log("setting", value, paramData.toHex(), paramData.toBigEndianHex());
+                        console.log("setting", content.payloadData.toHex(), value, paramData.toHex(), paramData.toBigEndianHex());
                         device.setPropValue(propertyCode, value);
                     }
                 };
