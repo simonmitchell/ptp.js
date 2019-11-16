@@ -170,6 +170,15 @@ define(['./util'], function (util) {
         return s;
     };
 
+    internalProto.toHex = function () {
+        var mapping = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'];
+        var result = "";
+        for (var c of this.arr) {
+            result = result + mapping[(c >>> 4)] + mapping[c % 16] + ' '
+        }
+        return result;
+    };
+
     create = function (values) {
         var internal = Object.create(internalProto, {
             arr: {value: []}
@@ -268,6 +277,21 @@ define(['./util'], function (util) {
                 return internal.toString();
             }},
 
+            toHex: {value: function () {
+                return internal.toHex();
+            }},
+
+            toBigEndianHex: {value: function() {
+                let hex = internal.toHex();
+                let bigEndianHex = "0x";
+                let i;
+                for (i = hex.length; i > 0; i-=2) {
+                    let byte = hex.substring(i - 2, i);
+                    bigEndianHex = bigEndianHex + byte;
+                }
+                return bigEndianHex;
+            }},
+
             array: {get: function () {
                 return internal.arr;
             }},
@@ -342,7 +366,7 @@ define(['./util'], function (util) {
     createFromHexString = function (value) {
         var obj = create(hexToBytes(value));
         return obj;
-    }
+    };
 
     return Object.create(null, {
         create: {value: create},

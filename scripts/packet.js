@@ -325,11 +325,11 @@ define(['./data-factory'], function (dataFactory) {
       return [startDataPacket, dataPacket, endDataPacket];
     };
 
-    createEventPacket = function () {
+    createEventPacket = function (transactionId = -1) {
         var data = dataFactory.create();
 
         data.setWord(headerLength, 0xC203); // event code
-        data.appendDword(0xFFFFFFFF); // transaction id == -1
+        data.appendDword(transactionId);
         data.appendDword(0);
 
         setHeader(data, types.event);
