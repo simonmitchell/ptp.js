@@ -282,7 +282,7 @@ define(['./util'], function (util) {
             }},
 
             toBigEndianHex: {value: function() {
-                let hex = internal.toHex();
+                let hex = internal.toHex().replace(/\s/g, '');
                 let bigEndianHex = "0x";
                 let i;
                 for (i = hex.length; i > 0; i-=2) {

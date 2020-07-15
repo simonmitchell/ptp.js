@@ -1,10 +1,10 @@
 define(['./data-factory', './device-prop-codes', './device-prop-types', './device-prop', 'props/white-balance', 
         'props/focus-mode', 'props/metering-mode', 'props/flash-mode', 'props/exposure-programme-mode',
         'props/still-capture-mode', 'props/shutter-speed', 'props/d-range-optimise', 'props/aspect-ratio',
-        'props/picture-effect', 'props/iso'], 
+        'props/picture-effect', 'props/iso', 'props/movie-format', 'props/movie-quality'], 
         function (dataFactory, devicePropTypes, devicePropDataTypes, deviceProp, whiteBalance, focusMode, 
                     meteringMode, flashMode, exposureProgramMode, stillCaptureMode, shutterSpeed, dro, aspectRatio,
-                    pictureEffect, iso) {
+                    pictureEffect, iso, movieFormat, movieQuality) {
 
     var propTypes;
 
@@ -108,7 +108,7 @@ define(['./data-factory', './device-prop-codes', './device-prop-types', './devic
             devicePropTypes.ShutterSpeed,
             devicePropDataTypes.uint32,
             0x01, 0x01,
-            0x00010028, 0x00010028,
+            0x00000000, 0x00000000,
             shutterSpeed, shutterSpeed
         ),
         0xd20e: deviceProp.createWithValues(
@@ -208,13 +208,13 @@ define(['./data-factory', './device-prop-codes', './device-prop-types', './devic
         ),
         0xd221: deviceProp.createWithValues(
             0xd221,
-            devicePropTypes.uint8,
+            devicePropDataTypes.uint8,
             0x01, 0x01,
             0x00, 0x01
         ),
         0xd222: deviceProp.createWithValues(
             0xd221,
-            devicePropTypes.uint16,
+            devicePropDataTypes.uint16,
             0x01, 0x01,
             0x0000, 0x0001,
             [0x0001, 0x0011, 0x0010], [0x0001, 0x0011, 0x0010]
@@ -226,11 +226,26 @@ define(['./data-factory', './device-prop-codes', './device-prop-types', './devic
             "",
             0x00
         ),
-        0xd22a: deviceProp.createWithValues(
+        0xd22a: deviceProp.createWithValues( // 0x01 is lock-unavailable, 0x02 is unlocked (Able to change exposure settings), 0x03 is locked (unable to change)
             0xd22a,
-            devicePropTypes.uint8,
+            devicePropDataTypes.uint8,
+            0x01, 0x01, // Get Set
+            0x01, 0x01 // Factory... Current
+        ),
+        [devicePropTypes.MovieFormat]: deviceProp.createWithValues(
+            devicePropTypes.MovieFormat,
+            devicePropDataTypes.uint8,
             0x01, 0x01,
-            0x00, 0x01
+            movieFormat.xavc_s_4k, movieFormat.xavc_s_4k,
+            Object.values(movieFormat), Object.values(movieFormat)
+            // Array.from({ length: 255 }, (v, i) => i), Array.from({ length: 255 }, (v, i) => i)
+        ),
+        [devicePropTypes.MovieQuality]: deviceProp.createWithValues(
+            devicePropTypes.MovieQuality,
+            devicePropDataTypes.uint16,
+            0x01, 0x01,
+            movieQuality._25p_16m, movieQuality._25p_16m,
+            Array.from({ length: 255 }, (v, i) => i), Array.from({ length: 255 }, (v, i) => i)
         )
     };
     

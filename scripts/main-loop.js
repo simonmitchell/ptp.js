@@ -18,6 +18,7 @@ define(['./packet', './event-loop', './loop-factory', './data-factory', './devic
         openSessionId,
         openSession,
         onSessionOpened,
+        responseCodes,
         serverState = {};
 
     serverState = {
@@ -55,7 +56,6 @@ define(['./packet', './event-loop', './loop-factory', './data-factory', './devic
         copyObject: 0x101a,
         getPartialObject: 0x101b,
         initiateOpenCapture: 0x101c,
-        okay: 0x2001,
         sdioConnect: 0x9201,
         sdioGetExtDeviceInfo: 0x9202,
         sonyGetDevicePropDesc: 0x9203,
@@ -66,6 +66,13 @@ define(['./packet', './event-loop', './loop-factory', './data-factory', './devic
         getAllDevicePropData: 0x9209,
 
         unknownHandshakeRequest: 0x920D
+    };
+
+    responseCodes = {
+        ok: 0x2001,
+        generalError: 0x2002,
+        sessionNotOpen: 0x2003,
+        devicePropNotSupported: 0x200A
     };
 
     Object.freeze(operationCodes);
@@ -97,7 +104,7 @@ define(['./packet', './event-loop', './loop-factory', './data-factory', './devic
         switch (request.opCode) {
             case operationCodes.openSession: 
                 openSessionId = request.sessionId;
-                loop.scheduleSend(packet.createCmdResponse(operationCodes.okay, request.transactionId));
+                loop.scheduleSend(packet.createCmdResponse(responseCodes.ok, request.transactionId));
             break;
             case operationCodes.getDeviceInfo:
 
@@ -152,7 +159,7 @@ define(['./packet', './event-loop', './loop-factory', './data-factory', './devic
                 for (var data of dataContainer) {
                   loop.scheduleSend(data);
                 }
-                loop.scheduleSend(packet.createCmdResponse(operationCodes.okay, request.transactionId));
+                loop.scheduleSend(packet.createCmdResponse(responseCodes.ok, request.transactionId));
             break;
             case operationCodes.sdioConnect:
 
@@ -163,7 +170,7 @@ define(['./packet', './event-loop', './loop-factory', './data-factory', './devic
                 for (var data of dataContainer) {
                   loop.scheduleSend(data);
                 }
-                loop.scheduleSend(packet.createCmdResponse(operationCodes.okay, request.transactionId));
+                loop.scheduleSend(packet.createCmdResponse(responseCodes.ok, request.transactionId));
             break;
             case operationCodes.sdioGetExtDeviceInfo:
                 // this list contains all available property codes starting with 0x5005 and
@@ -193,30 +200,127 @@ define(['./packet', './event-loop', './loop-factory', './data-factory', './devic
                     "18 d2" +
                     "1b d2" + 
                     "1c d2" + 
-                    "1d d2 1e d2 1f d2 21 d2 22 d2 23 d2" +
-                    "2a d2 2c d2 31 d2 35 d2 36 d2 3e d2 3f d2 40 d2" +
-                    "41 d2 42 d2 43 d2 44 d2 45 d2 46 d2 47 d2 48 d2" +
-                    "49 d2 4a d2 4c d2 4e d2 4f d2 50 d2 51 d2 52 d2" +
-                    "53 d2 54 d2 55 d2 56 d2 57 d2 58 d2 59 d2 5a d2" +
-                    "5b d2 5c d2 5d d2 5f d2 60 d2 61 d2 62 d2 63 d2" +
-                    "64 d2 67 d2 78 d2 16 00 00 00 c1 d2 c2 d2 c3 d2" +
-                    "c7 d2 c8 d2 c9 d2 ca d2 cd d2 ce d2 cf d2 d0 d2" +
-                    "d1 d2 d2 d2 d5 d2 d6 d2 d7 d2 d8 d2 d9 d2 da d2" +
-                    "db d2 dc d2 dd d2";
+                    "1d d2" + 
+                    "1e d2" + 
+                    "1f d2" +
+                    "21 d2" + 
+                    "22 d2" + 
+                    "23 d2" +
+                    "2a d2" + 
+                    "2c d2" + 
+                    "31 d2" + 
+                    "35 d2" + 
+                    "36 d2" + 
+                    "3e d2" + 
+                    "3f d2" + 
+                    "40 d2" +
+                    "41 d2" + 
+                    "42 d2" + 
+                    "43 d2" + 
+                    "44 d2" + 
+                    "45 d2" + 
+                    "46 d2" + 
+                    "47 d2" + 
+                    "48 d2" +
+                    "49 d2" +
+                    "4a d2" + 
+                    "4c d2" + 
+                    "4e d2" +
+                    "4f d2" + 
+                    "50 d2" + 
+                    "51 d2" + 
+                    "52 d2" +
+                    "53 d2" +
+                    "54 d2" + 
+                    "55 d2" + 
+                    "56 d2" + 
+                    "57 d2" + 
+                    "58 d2" + 
+                    "59 d2" + 
+                    "5a d2" +
+                    "5b d2" + 
+                    "5c d2" +
+                    "5d d2" + 
+                    "5f d2" + 
+                    "60 d2" + 
+                    "61 d2" + 
+                    "62 d2" + 
+                    "63 d2" +
+                    "64 d2" +
+                    "67 d2" + 
+                    "78 d2" + 
+                    "16 00 00 00" + 
+                    "c1 d2" + 
+                    "c2 d2" + 
+                    "c3 d2" +
+                    "c7 d2" + 
+                    "c8 d2" + 
+                    "c9 d2" + 
+                    "ca d2" + 
+                    "cd d2" + 
+                    "ce d2" + 
+                    "cf d2" + 
+                    "d0 d2" +
+                    "d1 d2" + 
+                    "d2 d2" + 
+                    "d5 d2" + 
+                    "d6 d2" + 
+                    "d7 d2" + 
+                    "d8 d2" + 
+                    "d9 d2" + 
+                    "da d2" +
+                    "db d2" + 
+                    "dc d2" + 
+                    "dd d2";
                 let sdioGetExtDeviceInfoPayload = dataFactory.createFromHexString(hexString);
 
                 dataContainer = packet.createDataContainer(request.transactionId, sdioGetExtDeviceInfoPayload);
-                for (var data of dataContainer) {
-                  loop.scheduleSend(data);
+
+                for (var i = 0; i < dataContainer.length; i++) {
+
+                    let dataPacket = dataContainer[i];
+                //     if (i == 1) {
+                //         // TODO(gswirski): this is not needed to establish connection
+                //         // but brings Wireshark sessions in-line with what I saw on a9
+                //         data = packet.createEventPacket();
+                //         eventLoop.scheduleSend(data);
+                //     }
+                    loop.scheduleSend(dataPacket);
                 }
 
-                // TODO(gswirski): this is not needed to establish connection
-                // but brings Wireshark sessions in-line with what I saw on a9
+                // TODO(simon): This is not needed to establish connection
+                // but brings Wireshark in-line with what gswirski saw on a9
+                // var unknownData = dataFactory.create();
+                // unknownData.appendWord(0);
+                // loop.scheduleSend(packet.createUnknownSonyPacket(4294951427, 0x0000ffff, unknownData));
 
-                // data = packet.createEventPacket();
-                // namedSockets['event'].write(data.buffer);
+                loop.scheduleSend(packet.createCmdResponse(responseCodes.ok, request.transactionId));
+            break;
+            case operationCodes.getDevicePropDesc:
+            case operationCodes.sonyGetDevicePropDesc:
 
-                loop.scheduleSend(packet.createCmdResponse(operationCodes.okay, request.transactionId));
+                console.log("Received getDevicePropDesc", request, request.argsData.toBigEndianHex());
+
+                var propertyCode = request.argsData.getWord(0);
+
+                data = device.getPropData(propertyCode);
+
+                console.log("Received getDevicePropDesc", propertyCode, data.toHex());
+
+                if (data) {
+
+                    dataContainer = packet.createDataContainer(request.transactionId, data);
+                    for (var dataPacket of dataContainer) {
+                      loop.scheduleSend(dataPacket);
+                    }
+
+                    loop.scheduleSend(packet.createCmdResponse(responseCodes.ok, request.transactionId));
+
+                } else {
+
+                    loop.scheduleSend(packet.createCmdResponse(responseCodes.devicePropNotSupported, request.transactionId));
+                }
+
             break;
             case operationCodes.getAllDevicePropData:
 
@@ -243,7 +347,7 @@ define(['./packet', './event-loop', './loop-factory', './data-factory', './devic
 
                     "31 d2 " + // Unknown
                     "02 00 " + // uint8
-                    "01 01 " + // Get and set 
+                    "00 02 " + // Get and set 
                     "00 " + // Factory
                     "01 " + // Current
                     "02 " + // Enum
@@ -304,28 +408,6 @@ define(['./packet', './event-loop', './loop-factory', './data-factory', './devic
                     "01 02 03 04 05 06 07 08 09 0a 0b 0c 0d " +
                     "0e 0f 10 11 12 13 " +
 
-                    "41 d2 " + // Unknown
-                    "02 00 " + // uint8
-                    "01 01 " + // Get and Sete
-                    "00 " + // Factory
-                    "08 " + // Current
-                    "02 " + // Array
-                    "03 00 " + // 3 values
-                    "08 09 03 " +
-                    "03 00 " + // 3 values
-                    "08 09 03 " +
-
-                    "42 d2 " + // Unknown
-                    "04 00 " + // uint16
-                    "01 01 " + // Get and Set
-                    "00 00 " + // Factory
-                    "21 00 " + // Current
-                    "02 " + // Array
-                    "02 00 " + // 2 values
-                    "24 00 21 00 " +
-                    "02 00 " + 
-                    "24 00 21 00 " +
-
                     "43 d2 " + // Unknown
                     "04 00 " +  // uint16
                     "01 01 " + // GetSet, unknown
@@ -369,15 +451,15 @@ define(['./packet', './event-loop', './loop-factory', './data-factory', './devic
                     "04 00 " + // 4 supported values
                     "00 01 02 03 " +
 
-                    "48 d2 " + // Unknown
+                    "48 d2 " + // Storage state
                     "02 00 " + // uint8 
                     "01 01 " + // Get, Unknown 
                     "00 " + // Factory
-                    "02 " + // Current
+                    "01 " + // Current (0x01 = card inserted, 0x02 = no media)
                     "02 " + // Enum 
                     "00 00 00 00 " + // No values
 
-                    "49 d2 " + // Unknown
+                    "49 d2 " + // Number of pictures remaining
                     "06 00 " + // uint32
                     "01 01 " + // Get, Unknown
                     "00 00 00 00 " + // Factory
@@ -387,7 +469,7 @@ define(['./packet', './event-loop', './loop-factory', './data-factory', './devic
                     "ff ff ff ff " + // max uint32
                     "01 00 00 00 " + // 1 
 
-                    "4a d2 " + // Unknown
+                    "4a d2 " + // Remaining capture time
                     "06 00 " + // uint32
                     "01 01 " + // Get, Unknown
                     "00 00 00 00 " + // Factory
@@ -417,31 +499,90 @@ define(['./packet', './event-loop', './loop-factory', './data-factory', './devic
 
                     "4f d2 " + // unknown
                     "02 00 " + // uint8
-                    "01 01" +
-                    "00 01 02 02 00 01 02 02 00 01 02 50 d2 02 00 " +
+                    "01 01" + // GetSet, Unknown
+                    "00" + // Factory
+                    "01" + // Current
+                    "02" + // Enum
+                    "02 00 01 02 02 00 01 02 50 d2 02 00 " +
                     "00 01 00 00 02 00 00 00 00 51 d2 02 00 00 02 00 " +
-                    "00 01 00 02 01 52 d2 02 00 01 01 00 01 02 03 00 " +
-                    "01 02 03 03 00 01 02 03 53 d2 02 00 01 01 00 01 " +
+                    "00 01 00 02 01" + 
+
+                    "52 d2" + // Still Quality 
+                    "02 00" +  //uint8 
+                    "01 01" + // GetSet, Unknown 
+                    "00" + // Factory 
+                    "01" + // Current 
+                    "02" + // Enum 
+                    "03 00 " + // 3 values
+                    "01 02 03" + // 01 = Extra Fine, 02 = fine, 03 = standard
+                    "03 00" + 
+                    "01 02 03" + 
+
+                    "53 d2 02 00 01 01 00 01 " +
                     "02 03 00 01 02 03 03 00 01 02 03 54 d2 08 00 01 " +
                     "02 00 00 00 00 00 00 00 00 f0 00 40 01 00 00 00 " +
                     "00 02 00 00 04 00 ff ff ff ff 00 00 00 00 ff ff " +
                     "ff ff 0a 00 00 00 ff ff ff ff 2f 00 00 00 ff ff " +
-                    "ff ff 5e 00 00 00 55 d2 02 00 01 01 00 04 02 05 " +
-                    "00 05 04 03 02 01 05 00 05 04 03 02 01 56 d2 02 " +
+                    "ff ff 5e 00 00 00" + 
+
+                    "55 d2" + 
+                    "02 00" + 
+                    "01 01" + 
+                    "00 04" + 
+                    "02 05 00" +
+                    "05 04 03 02 01" + 
+                    "05 00" + 
+                    "05 04 03 02 01" + 
+
+                    "56 d2 02 " +
                     "00 00 00 00 04 02 00 00 00 00 57 d2 06 00 00 00 " +
                     "00 00 00 00 00 00 00 00 01 00 00 00 00 ff ff ff " +
                     "ff 01 00 00 00 58 d2 06 00 00 00 00 00 00 00 00 " +
                     "00 00 00 01 00 00 00 00 ff ff ff ff 01 00 00 00 " +
                     "59 d2 02 00 01 02 00 01 02 00 00 00 00 5a d2 02 " +
-                    "00 01 01 00 00 02 02 00 00 01 02 00 00 01 5b d2 " +
-                    "02 00 00 00 00 00 02 02 00 00 01 02 00 00 01 5c " +
+                    "00 01 01 00 00 02 02 00 00 01 02 00 00 01" + 
+
+                    "5b d2 " + //???
+                    "02 00" + // uint8
+                    "01 01" + // No get or set
+                    "01 01" + // Factory Current
+                    "02" + //Enum
+                    "02 00" +// 2 values 
+                    "00 01" + 
+                    "02 00" + 
+                    "00 01" + 
+
+                    "5c " +
                     "d2 06 00 01 00 00 00 00 00 e8 03 00 00 01 e8 03 " +
-                    "00 00 e8 03 00 00 64 00 00 00 5d d2 " +
-                    "06 00 00 00 00 00 00 00 00 00 00 01 " +
-                    "00 5f d2 02 00 01 02 00 01 02 00 00 00 00 60 d2 " +
-                    "02 00 00 00 00 01 02 00 00 00 00 61 d2 06 00 00 " +
-                    "00 00 00 00 00 00 00 00 00 01 00 00 00 00 ff ff " +
-                    "ff ff 01 00 00 00 62 d2 02 00 01 01 00 00 02 02 " +
+                    "00 00 e8 03 00 00 64 00 00 00" + 
+
+                    "5d d2" + // Digital zoom
+                    "06 00" + // uint32
+                    "00 00" + // GetSet, Unknown 
+                    "00 00 00 00" + // Factory
+                    "00 00 00 01 " + // Current
+                    "00" + // Unknown
+
+                    "5f d2" + // Something to do with BULB
+                    "02 00" + // uint8
+                    "01 02" + // No get, set  
+                    "00 00" + // Factory Current
+                    "02 00 00 00 00" + 
+
+                    "60 d2 " +
+                    "02 00 00 00 00 01 02 00 00 00 00" + 
+
+                    "61 d2" + 
+                    "06 00" + 
+                    "00 00" +
+                    "00 00 00 00" + 
+                    "15 00 00 00" + 
+                    "01" + 
+                    "00 00 00 00" + 
+                    "ff ff ff ff" +
+                    "01 00 00 00" + 
+
+                    "62 d2 02 00 01 01 00 00 02 02 " +
                     "00 01 00 02 00 01 00 63 d2 02 00 01 01 00 00 02 " +
                     "02 00 01 00 02 00 01 00 64 d2 02 00 00 01 00 00 " +
                     "02 00 00 00 00 67 d2 06 00 00 01 00 00 00 00 00 " +
@@ -468,7 +609,7 @@ define(['./packet', './event-loop', './loop-factory', './data-factory', './devic
                   loop.scheduleSend(data);
                 }
 
-                loop.scheduleSend(packet.createCmdResponse(operationCodes.okay, request.transactionId));
+                loop.scheduleSend(packet.createCmdResponse(responseCodes.ok, request.transactionId));
             break;
             case operationCodes.unknownHandshakeRequest:
                 hexString = "81 00 00 00 00";
@@ -481,12 +622,76 @@ define(['./packet', './event-loop', './loop-factory', './data-factory', './devic
                   loop.scheduleSend(data);
                 }
 
-                loop.scheduleSend(packet.createCmdResponse(operationCodes.okay, request.transactionId));
+                loop.scheduleSend(packet.createCmdResponse(responseCodes.ok, request.transactionId));
             break;
             case operationCodes.setControlDeviceA:
                 console.log("Received setControlDeviceA", request);
 
                 var propertyCode = request.argsData.getWord(0);
+
+                startDataPacketCallbacks[request.transactionId] = function (content) {
+                    // do nothing
+                };
+                dataPacketCallbacks[request.transactionId] = function (content) {
+
+                    let prop = device.getProp(propertyCode);
+
+                    if (prop) {
+
+                        let value;
+                        let paramData;
+                        switch (prop.dataType) {
+                            case devicePropTypes.int8:
+                            case devicePropTypes.uint8:
+                                value = content.payloadData.getByte(0);
+                                paramData = content.payloadData.slice(0, 1);
+                            break;
+                            case devicePropTypes.int16:
+                            case devicePropTypes.uint16:
+                                value = content.payloadData.getWord(0);
+                                paramData = content.payloadData.slice(0, 2);
+                            break;
+                            case devicePropTypes.uint32:
+                                value = content.payloadData.getDword(0);
+                                paramData = content.payloadData.slice(0, 4);
+                            default:
+                            break;
+                        }
+
+                        console.log("setting", prop.dataType, content.payloadData.toHex());
+                        console.log("setting", content.payloadData.toHex(), value, paramData.toHex(), paramData.toBigEndianHex());
+                        device.setPropValue(propertyCode, value);
+                    }
+                };
+
+                endDataPacketCallbacks[request.transactionId] = function (content) {
+                    eventLoop.scheduleSend(packet.createEventPacket(content.transactionId));
+                };
+
+                loop.scheduleSend(packet.createCmdResponse(responseCodes.ok, request.transactionId));
+            break;
+            case operationCodes.setControlDeviceB:
+
+                console.log("Received setControlDeviceB", request, request.argsData.toHex());
+
+                var propertyCode = request.argsData.getWord(0);
+
+                switch (propertyCode) {
+                    case deviceProps.halfPressShutter:
+                    setTimeout(function () {
+                        device.setPropValue(deviceProps.FocusFound, 2);
+                        eventLoop.scheduleSend(packet.createEventPacket(request.transactionId, eventLoop.eventCodes.sonyPropertyChanged, [deviceProps.FocusFound]))
+                    }, 400);
+                    break;
+                    case deviceProps.captureImage:
+                    setTimeout(function () {
+                        device.setPropValue(deviceProps.ObjectInMemory, 129);
+                        eventLoop.scheduleSend(packet.createEventPacket(request.transactionId, eventLoop.eventCodes.sonyPropertyChanged, [deviceProps.ObjectInMemory]))
+                        eventLoop.scheduleSend(packet.createEventPacket(request.transactionId, eventLoop.eventCodes.sonyObjectAdded, [0xffffc001]))
+                    }, 1200);
+                    default:
+                    break;
+                }
 
                 startDataPacketCallbacks[request.transactionId] = function (content) {
                     // do nothing
@@ -526,10 +731,11 @@ define(['./packet', './event-loop', './loop-factory', './data-factory', './devic
                     eventLoop.scheduleSend(packet.createEventPacket(content.transactionId));
                 };
 
-                loop.scheduleSend(packet.createCmdResponse(operationCodes.okay, request.transactionId));
+                loop.scheduleSend(packet.createCmdResponse(responseCodes.ok, request.transactionId));
             break;
             default:
                 console.log("Got unknown opcode request", request.opCode);
+                loop.scheduleSend(packet.createCmdResponse(responseCodes.ok, request.transactionId));
 
         }
     };

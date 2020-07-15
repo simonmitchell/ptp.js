@@ -22,6 +22,7 @@ define(['./data-factory'], function (dataFactory) {
         createDataContainer,
         createEventPacket,
         createPong,
+        createUnknownSonyPacket,
         startNewTransaction,
         hexToBytes,
         parsePacket, parsePackets,
@@ -88,25 +89,12 @@ define(['./data-factory'], function (dataFactory) {
     };
 
     parsers[types.cmdRequest] = function (data) {
-
-        var opCode = data.getWord(4)
-
         // Sometimes cmdRequest has a different length!
-        var sessionId, transactionId;
-        // OpenSession seems to indlude both sessionId and transactionId
-        if (data.length === 14 && opCode === 0x9201) {
-            sessionId = data.getDword(6);
-            transactionId = data.getDword(10);
-        } else {
-            transactionId = data.getDword(6);
-        }
-
         return {
             dataPhaseInfo: data.getDword(0),
-            opCode: opCode,
-            sessionId: sessionId,
-            transactionId: transactionId,
-            argsData: data.slice(10)
+            opCode: data.getWord(4),
+            transactionId: data.getDword(6),
+            argsData: data.slice(10),
         };
     };
 
@@ -271,6 +259,7 @@ define(['./data-factory'], function (dataFactory) {
     };
 
     createCmdResponse = function (code, transactionId, responseData) {
+
         var data = dataFactory.create();
         data.setWord(headerLength, code);
         data.setDword(headerLength + 2, transactionId);
@@ -278,7 +267,6 @@ define(['./data-factory'], function (dataFactory) {
             data.appendData(responseData);
         }
         setHeader(data, types.cmdResponse);
-
         return data;
     };
 
@@ -325,14 +313,18 @@ define(['./data-factory'], function (dataFactory) {
       return [startDataPacket, dataPacket, endDataPacket];
     };
 
-    createEventPacket = function (transactionId = -1) {
+    createEventPacket = function (transactionId = -1, eventCode = 0xc203, parameters = [0]) {
         var data = dataFactory.create();
 
-        data.setWord(headerLength, 0xC203); // event code
-        data.appendDword(transactionId);
-        data.appendDword(0);
+        // data.setWord(headerLength, eventCode); // event code
+        // data.appendDword(transactionId);
+        
+        // for (var parameter in parameters) {
+            // data.appendDword(parameter);
+        // };
 
-        setHeader(data, types.event);
+        // Sony sends malformed event packets, so so should we!
+        setHeader(data, types.event, 18);
         return data;
     };
 
@@ -341,6 +333,15 @@ define(['./data-factory'], function (dataFactory) {
         setHeader(data, types.pong);
         return data;
     };
+
+    createUnknownSonyPacket = function (length, type, additionalData) {
+        var data = dataFactory.create();
+        if (additionalData) {
+            data.appendData(additionalData);
+        }
+        setHeader(data, type, length);
+        return data;
+    }
 
     startNewTransaction = function () {
         transactionId += 1;
@@ -358,6 +359,7 @@ define(['./data-factory'], function (dataFactory) {
         createEndDataPacket: {value: createEndDataPacket},
         createDataContainer: { value: createDataContainer},
         createEventPacket: {value: createEventPacket},
+        createUnknownSonyPacket: {value: createUnknownSonyPacket},
         createPong: {value: createPong},
         startNewTransaction: {value: startNewTransaction},
         types: {get: function () { return types; }},

@@ -10,7 +10,9 @@ define([
     var create, internalProto = {}, proto = {};
 
     proto.responseCodes = {
-        ok: 0x2001
+        ok: 0x2001,
+        generalError: 0x2002,
+        sessionNotOpen: 0x2003
     };
 
     Object.freeze(proto.responseCodes);
