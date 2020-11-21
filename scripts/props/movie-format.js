@@ -15,6 +15,12 @@ define(function () {
         xavc: 0x06,
         mxf: 0x07,
         xavc_s_4k: 0x08,
-        xavc_s_hd: 0x09
+        xavc_s_hd: 0x09,
+        xavc_hs_8k: 0x0a,
+        xavc_hs_4k: 0x0b,
+        xavc_s_4k_alt: 0x0c,
+        xavc_s_hd_alt: 0x0d,
+        xavc_si_4k: 0x0e,
+        xavc_si_hd: 0x0f
     });
 });

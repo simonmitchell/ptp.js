@@ -176,7 +176,7 @@ define(['./packet', './event-loop', './loop-factory', './data-factory', './devic
                 // this list contains all available property codes starting with 0x5005 and
                 // ending with 0xd2dd
                 hexString = "2c 01" +
-                    "48 00 00 00" + // 72 distinct property codes
+                    "49 00 00 00" + // 72 distinct property codes
                     "05 50" + // White balance
                     "07 50" + // F Number
                     "0a 50" + // Focus Mode
@@ -248,6 +248,7 @@ define(['./packet', './event-loop', './loop-factory', './data-factory', './devic
                     "63 d2" +
                     "64 d2" +
                     "67 d2" + 
+                    "6a d2" +
                     "78 d2" + 
                     "16 00 00 00" + 
                     "c1 d2" + 
@@ -513,13 +514,12 @@ define(['./packet', './event-loop', './loop-factory', './data-factory', './devic
                     "00" + // Factory 
                     "01" + // Current 
                     "02" + // Enum 
-                    "03 00 " + // 3 values
+                    "03 00" + // 3 values
                     "01 02 03" + // 01 = Extra Fine, 02 = fine, 03 = standard
                     "03 00" + 
                     "01 02 03" + 
-
-                    "53 d2 02 00 01 01 00 01 " +
-                    "02 03 00 01 02 03 03 00 01 02 03 54 d2 08 00 01 " +
+                    
+                    "54 d2 08 00 01 " +
                     "02 00 00 00 00 00 00 00 00 f0 00 40 01 00 00 00 " +
                     "00 02 00 00 04 00 ff ff ff ff 00 00 00 00 ff ff " +
                     "ff ff 0a 00 00 00 ff ff ff ff 2f 00 00 00 ff ff " +
@@ -573,7 +573,7 @@ define(['./packet', './event-loop', './loop-factory', './data-factory', './devic
                     "02 00 00 00 00 01 02 00 00 00 00" + 
 
                     "61 d2" + 
-                    "06 00" + 
+                    "06 00" +  
                     "00 00" +
                     "00 00 00 00" + 
                     "15 00 00 00" + 

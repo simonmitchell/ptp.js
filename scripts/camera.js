@@ -1,10 +1,10 @@
 define(['./data-factory', './device-prop-codes', './device-prop-types', './device-prop', 'props/white-balance', 
         'props/focus-mode', 'props/metering-mode', 'props/flash-mode', 'props/exposure-programme-mode',
         'props/still-capture-mode', 'props/shutter-speed', 'props/d-range-optimise', 'props/aspect-ratio',
-        'props/picture-effect', 'props/iso', 'props/movie-format', 'props/movie-quality'], 
+        'props/picture-effect', 'props/iso', 'props/movie-format', 'props/movie-quality', 'props/still-format'], 
         function (dataFactory, devicePropTypes, devicePropDataTypes, deviceProp, whiteBalance, focusMode, 
                     meteringMode, flashMode, exposureProgramMode, stillCaptureMode, shutterSpeed, dro, aspectRatio,
-                    pictureEffect, iso, movieFormat, movieQuality) {
+                    pictureEffect, iso, movieFormat, movieQuality, stillFormat) {
 
     var propTypes;
 
@@ -232,20 +232,33 @@ define(['./data-factory', './device-prop-codes', './device-prop-types', './devic
             0x01, 0x01, // Get Set
             0x01, 0x01 // Factory... Current
         ),
+        0xd26a: deviceProp.createWithValues(
+            0xd26a,
+            devicePropDataTypes.uint8,
+            0x01, 0x01,
+            0x01, 0x02,
+            [0x01, 0x02], [0x01, 0x02]
+        ),
         [devicePropTypes.MovieFormat]: deviceProp.createWithValues(
             devicePropTypes.MovieFormat,
             devicePropDataTypes.uint8,
             0x01, 0x01,
             movieFormat.xavc_s_4k, movieFormat.xavc_s_4k,
             Object.values(movieFormat), Object.values(movieFormat)
-            // Array.from({ length: 255 }, (v, i) => i), Array.from({ length: 255 }, (v, i) => i)
         ),
         [devicePropTypes.MovieQuality]: deviceProp.createWithValues(
             devicePropTypes.MovieQuality,
             devicePropDataTypes.uint16,
             0x01, 0x01,
             movieQuality._25p_16m, movieQuality._25p_16m,
-            Array.from({ length: 255 }, (v, i) => i), Array.from({ length: 255 }, (v, i) => i)
+            Object.values(movieQuality), Object.values(movieQuality)
+        ),
+        [devicePropTypes.StillFormat]: deviceProp.createWithValues(
+            devicePropTypes.StillFormat,
+            devicePropDataTypes.uint8,
+            0x01, 0x01,
+            stillFormat.jpeg, stillFormat.jpeg,
+            Object.values(stillFormat), Object.values(stillFormat)
         )
     };
     

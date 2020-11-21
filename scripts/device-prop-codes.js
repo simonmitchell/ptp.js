@@ -62,6 +62,7 @@ define(function () {
         Movie: 0xD2C8,
         StillImage: 0xD2C7,
         MovieFormat: 0xd241,
-        MovieQuality: 0xd242
+        MovieQuality: 0xd242,
+        StillFormat: 0xd253
     });
 });
